@@ -1,0 +1,332 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+  FLUTTER_VERSION: '3.16.0'
+
+jobs:
+  # Backend Tests and Linting
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: hospital_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    defaults:
+      run:
+        working-directory: ./hospital_backend
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: hospital_backend/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Prisma client
+      run: npx prisma generate
+
+    - name: Run database migrations
+      run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hospital_test
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Run type checking
+      run: npm run type-check
+
+    - name: Run tests
+      run: npm test
+      env:
+        NODE_ENV: test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hospital_test
+        JWT_SECRET: test-secret-key
+        JWT_REFRESH_SECRET: test-refresh-secret
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./hospital_backend/coverage
+        flags: backend
+
+  # Frontend Tests and Analysis
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./hospital_app
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+        channel: 'stable'
+        cache: true
+
+    - name: Get Flutter dependencies
+      run: flutter pub get
+
+    - name: Verify formatting
+      run: dart format --output=none --set-exit-if-changed .
+
+    - name: Analyze project source
+      run: flutter analyze --fatal-infos
+
+    - name: Run tests
+      run: flutter test --coverage
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./hospital_app/coverage
+        flags: frontend
+
+  # Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Backend Build and Docker
+  backend-build:
+    name: Backend Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, security-scan]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    defaults:
+      run:
+        working-directory: ./hospital_backend
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: hospital_backend/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./hospital_backend
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/hospital-backend:latest
+          ${{ secrets.DOCKER_USERNAME }}/hospital-backend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Frontend Build for Multiple Platforms
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    needs: [frontend-test, security-scan]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    defaults:
+      run:
+        working-directory: ./hospital_app
+
+    strategy:
+      matrix:
+        platform: [web, android]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+        channel: 'stable'
+        cache: true
+
+    - name: Setup Java (for Android)
+      if: matrix.platform == 'android'
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Build for Web
+      if: matrix.platform == 'web'
+      run: flutter build web --release
+
+    - name: Build for Android
+      if: matrix.platform == 'android'
+      run: flutter build apk --release
+
+    - name: Upload Web artifacts
+      if: matrix.platform == 'web'
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-build
+        path: hospital_app/build/web/
+
+    - name: Upload Android artifacts
+      if: matrix.platform == 'android'
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-build
+        path: hospital_app/build/app/outputs/flutter-apk/
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [backend-build, frontend-build]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+    - name: Deploy to staging server
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment commands here
+        # For example, deploy to Heroku, AWS, etc.
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [backend-build, frontend-build]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+    - name: Deploy to production server
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment commands here
+        # For example, deploy to AWS, Google Cloud, etc.
+
+  # Create Release
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'release:')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Extract version from commit message
+      id: extract_version
+      run: |
+        VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP 'release: \K[0-9]+\.[0-9]+\.[0-9]+')
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.extract_version.outputs.VERSION }}
+        release_name: Release v${{ steps.extract_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        body: |
+          ## What's Changed
+          
+          See the commit history for detailed changes.
+          
+          ## Installation
+          
+          ### Backend
+          ```bash
+          docker pull ${{ secrets.DOCKER_USERNAME }}/hospital-backend:${{ github.sha }}
+          ```
+          
+          ### Frontend
+          Download the artifacts from this release.
+
+  # Cleanup old artifacts
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [backend-test, frontend-test, backend-build, frontend-build]
+
+    steps:
+    - name: Delete old artifacts
+      uses: geekyeggo/delete-artifact@v4
+      with:
+        name: |
+          web-build
+          android-build
+        failOnError: false

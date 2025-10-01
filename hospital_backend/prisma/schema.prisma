@@ -1,0 +1,831 @@
+// Hospital Management System - Complete Database Schema
+// Comprehensive healthcare management with role-based access control
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ CORE AUTHENTICATION & AUTHORIZATION ============
+
+model Role {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique // patient, doctor, nurse, receptionist, pharmacist, lab_staff, admin
+  displayName      String
+  description      String?
+  permissions      Permission[]
+  users            User[]
+  dashboardOptions DashboardOption[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Permission {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique // read_patients, write_patients, read_prescriptions, etc.
+  module    String   // patients, pharmacy, lab, billing, etc.
+  action    String   // create, read, update, delete, approve
+  roles     Role[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id              Int                @id @default(autoincrement())
+  email           String             @unique
+  passwordHash    String
+  displayName     String
+  firstName       String
+  lastName        String
+  phone           String?
+  avatar          String?
+  isActive        Boolean            @default(true)
+  lastLogin       DateTime?
+  roleId          Int
+  role            Role               @relation(fields: [roleId], references: [id])
+  
+  // Profile connections
+  patientProfile  Patient?
+  doctorProfile   Doctor?
+  staffProfile    Staff?
+  
+  // Activity tracking
+  auditLogs       AuditLog[]
+  sessions        UserSession[]
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model UserSession {
+  id           String    @id @default(cuid())
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  deviceInfo   String?
+  ipAddress    String?
+  isActive     Boolean   @default(true)
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  lastUsed     DateTime  @default(now())
+}
+
+model DashboardOption {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  icon        String
+  routeName   String
+  queryParams Json?
+  roleId      Int
+  role        Role     @relation(fields: [roleId], references: [id])
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([roleId, title])
+}
+
+// ============ PATIENT MANAGEMENT & EHR ============
+
+model Patient {
+  id                String              @id @default(cuid())
+  userId            Int?                @unique
+  user              User?               @relation(fields: [userId], references: [id])
+  
+  // Basic Information
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime
+  gender            Gender
+  bloodType         BloodType?
+  phone             String
+  email             String?
+  address           Json                // {street, city, state, zip, country}
+  emergencyContact  Json                // {name, relationship, phone}
+  
+  // Medical Information
+  allergies         String[]
+  chronicConditions String[]
+  insuranceInfo     Json?               // {provider, policyNumber, groupNumber}
+  
+  // System fields
+  patientNumber     String              @unique
+  status            PatientStatus       @default(ACTIVE)
+  registrationDate  DateTime            @default(now())
+  
+  // Relationships
+  appointments      Appointment[]
+  medicalRecords    MedicalRecord[]
+  prescriptions     Prescription[]
+  labOrders         LabOrder[]
+  radiology         RadiologyOrder[]
+  admissions        Admission[]
+  bills             Bill[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  DECEASED
+  TRANSFERRED
+}
+
+model MedicalRecord {
+  id                String              @id @default(cuid())
+  patientId         String
+  patient           Patient             @relation(fields: [patientId], references: [id])
+  doctorId          String
+  doctor            Doctor              @relation(fields: [doctorId], references: [id])
+  
+  visitDate         DateTime
+  visitType         VisitType
+  chiefComplaint    String
+  symptoms          String[]
+  examination       Json                // Physical examination findings
+  diagnosis         String[]
+  treatmentPlan     String
+  notes             String?
+  
+  // Vitals
+  vitals            Json?               // {temperature, bp, pulse, respiration, weight, height}
+  
+  followUpDate      DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum VisitType {
+  CONSULTATION
+  FOLLOW_UP
+  EMERGENCY
+  ROUTINE_CHECKUP
+  PROCEDURE
+  SURGERY
+}
+
+// ============ STAFF MANAGEMENT ============
+
+model Doctor {
+  id                String              @id @default(cuid())
+  userId            Int                 @unique
+  user              User                @relation(fields: [userId], references: [id])
+  
+  // Professional Information
+  licenseNumber     String              @unique
+  specialty         Specialty
+  subSpecialty      String?
+  yearsOfExperience Int
+  education         Json[]              // Array of education records
+  certifications    String[]
+  
+  // Hospital Information
+  departmentId      String
+  department        Department          @relation(fields: [departmentId], references: [id])
+  consultationFee   Decimal?
+  workingHours      Json                // {days: [], startTime: "", endTime: ""}
+  
+  // Status
+  isAvailable       Boolean             @default(true)
+  currentStatus     DoctorStatus        @default(AVAILABLE)
+  
+  // Relationships
+  appointments      Appointment[]
+  medicalRecords    MedicalRecord[]
+  prescriptions     Prescription[]
+  surgeries         Surgery[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum Specialty {
+  CARDIOLOGY
+  NEUROLOGY
+  ORTHOPEDICS
+  PEDIATRICS
+  DERMATOLOGY
+  PSYCHIATRY
+  RADIOLOGY
+  SURGERY
+  EMERGENCY_MEDICINE
+  ONCOLOGY
+  GYNECOLOGY
+  UROLOGY
+  OPHTHALMOLOGY
+  ANESTHESIOLOGY
+  PATHOLOGY
+  GENERAL_MEDICINE
+}
+
+enum DoctorStatus {
+  AVAILABLE
+  BUSY
+  IN_SURGERY
+  ON_CALL
+  OFF_DUTY
+  ON_VACATION
+  EMERGENCY
+}
+
+model Staff {
+  id            String         @id @default(cuid())
+  userId        Int            @unique
+  user          User           @relation(fields: [userId], references: [id])
+  
+  employeeId    String         @unique
+  departmentId  String
+  department    Department     @relation(fields: [departmentId], references: [id])
+  position      String
+  shiftType     ShiftType      @default(DAY)
+  salary        Decimal?
+  hireDate      DateTime
+  
+  // Emergency contact
+  emergencyContact Json         // {name, relationship, phone}
+  
+  // Skills and certifications
+  skills        String[]
+  certifications String[]
+  
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum ShiftType {
+  DAY
+  NIGHT
+  SWING
+  ROTATING
+  ON_CALL
+}
+
+model Department {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  headId      String?   // Department head (doctor)
+  location    String?
+  isActive    Boolean   @default(true)
+  
+  doctors     Doctor[]
+  staff       Staff[]
+  beds        Bed[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ============ APPOINTMENT SCHEDULING ============
+
+model Appointment {
+  id              String              @id @default(cuid())
+  patientId       String
+  patient         Patient             @relation(fields: [patientId], references: [id])
+  doctorId        String
+  doctor          Doctor              @relation(fields: [doctorId], references: [id])
+  
+  appointmentDate DateTime
+  duration        Int                 // Duration in minutes
+  type            AppointmentType
+  status          AppointmentStatus   @default(SCHEDULED)
+  
+  reason          String
+  notes           String?
+  
+  // Scheduling
+  roomNumber      String?
+  isUrgent        Boolean             @default(false)
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+enum AppointmentType {
+  CONSULTATION
+  FOLLOW_UP
+  PROCEDURE
+  SURGERY
+  EMERGENCY
+  TELEMEDICINE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+// ============ PHARMACY MANAGEMENT ============
+
+model Medication {
+  id                String              @id @default(cuid())
+  name              String
+  genericName       String
+  manufacturer      String
+  category          MedicationCategory
+  
+  // Inventory
+  currentStock      Int
+  minStockLevel     Int
+  maxStockLevel     Int
+  unitPrice         Decimal
+  expiryDate        DateTime
+  batchNumber       String
+  
+  // Medical information
+  dosage            String
+  unit              String              // tablets, ml, mg, etc.
+  description       String?
+  sideEffects       String[]
+  contraindications String[]
+  
+  prescriptionRequired Boolean          @default(true)
+  status            MedicationStatus    @default(ACTIVE)
+  location          String?             // Storage location
+  supplier          String?
+  
+  // Relationships
+  prescriptionItems PrescriptionItem[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum MedicationCategory {
+  ANTIBIOTICS
+  PAIN_KILLERS
+  VITAMINS
+  CARDIAC
+  RESPIRATORY
+  DIGESTIVE
+  NEUROLOGICAL
+  DIABETES
+  HORMONES
+  VACCINES
+  ANTISEPTICS
+  SUPPLEMENTS
+}
+
+enum MedicationStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  RECALLED
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+model Prescription {
+  id          String              @id @default(cuid())
+  patientId   String
+  patient     Patient             @relation(fields: [patientId], references: [id])
+  doctorId    String
+  doctor      Doctor              @relation(fields: [doctorId], references: [id])
+  
+  prescriptionNumber String           @unique
+  status      PrescriptionStatus  @default(PENDING)
+  issuedDate  DateTime            @default(now())
+  
+  instructions String?
+  notes       String?
+  
+  // Relationships
+  items       PrescriptionItem[]
+  
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+enum PrescriptionStatus {
+  PENDING
+  DISPENSED
+  PARTIALLY_DISPENSED
+  CANCELLED
+  EXPIRED
+}
+
+model PrescriptionItem {
+  id             String        @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription  @relation(fields: [prescriptionId], references: [id])
+  medicationId   String
+  medication     Medication    @relation(fields: [medicationId], references: [id])
+  
+  quantity       Int
+  dosage         String
+  frequency      String        // "2 times daily", "as needed", etc.
+  duration       String        // "7 days", "2 weeks", etc.
+  instructions   String?
+  
+  isDispensed    Boolean       @default(false)
+  dispensedDate  DateTime?
+  dispensedBy    String?       // Staff member who dispensed
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// ============ LABORATORY & DIAGNOSTICS ============
+
+model LabOrder {
+  id          String        @id @default(cuid())
+  patientId   String
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  doctorId    String?       // Ordering doctor
+  
+  orderNumber String        @unique
+  orderDate   DateTime      @default(now())
+  urgency     LabUrgency    @default(ROUTINE)
+  status      LabStatus     @default(PENDING)
+  
+  // Test information
+  testTypes   String[]      // Array of test names
+  instructions String?
+  clinicalInfo String?      // Clinical indication
+  
+  // Results
+  results     LabResult[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum LabUrgency {
+  ROUTINE
+  URGENT
+  STAT
+}
+
+enum LabStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model LabResult {
+  id          String      @id @default(cuid())
+  labOrderId  String
+  labOrder    LabOrder    @relation(fields: [labOrderId], references: [id])
+  
+  testName    String
+  value       String
+  unit        String?
+  referenceRange String?
+  status      ResultStatus @default(NORMAL)
+  notes       String?
+  
+  performedBy String?     // Lab technician
+  verifiedBy  String?     // Lab supervisor
+  reportedAt  DateTime?
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum ResultStatus {
+  NORMAL
+  ABNORMAL
+  CRITICAL
+  PENDING
+}
+
+// ============ RADIOLOGY ============
+
+model RadiologyOrder {
+  id            String            @id @default(cuid())
+  patientId     String
+  patient       Patient           @relation(fields: [patientId], references: [id])
+  doctorId      String?           // Ordering doctor
+  
+  orderNumber   String            @unique
+  orderDate     DateTime          @default(now())
+  studyType     String            // X-ray, CT, MRI, etc.
+  bodyPart      String
+  urgency       RadiologyUrgency  @default(ROUTINE)
+  status        RadiologyStatus   @default(SCHEDULED)
+  
+  clinicalInfo  String?
+  instructions  String?
+  
+  // Scheduling
+  scheduledDate DateTime?
+  performedDate DateTime?
+  
+  // Results
+  findings      String?
+  impression    String?
+  images        String[]          // URLs to image files
+  reportedBy    String?           // Radiologist
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+enum RadiologyUrgency {
+  ROUTINE
+  URGENT
+  EMERGENT
+}
+
+enum RadiologyStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REPORTED
+}
+
+// ============ FACILITY & BED MANAGEMENT ============
+
+model Bed {
+  id           String        @id @default(cuid())
+  bedNumber    String        @unique
+  departmentId String
+  department   Department    @relation(fields: [departmentId], references: [id])
+  
+  bedType      BedType
+  status       BedStatus     @default(AVAILABLE)
+  location     String?       // Room number, floor, etc.
+  
+  // Current admission
+  admissions   Admission[]
+  
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum BedType {
+  GENERAL
+  ICU
+  EMERGENCY
+  MATERNITY
+  PEDIATRIC
+  ISOLATION
+  SURGERY
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  BLOCKED
+  CLEANING
+}
+
+model Admission {
+  id             String          @id @default(cuid())
+  patientId      String
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  bedId          String
+  bed            Bed             @relation(fields: [bedId], references: [id])
+  
+  admissionDate  DateTime        @default(now())
+  dischargeDate  DateTime?
+  admissionType  AdmissionType
+  status         AdmissionStatus @default(ADMITTED)
+  
+  // Medical information
+  admittingDiagnosis String
+  dischargeDiagnosis String?
+  treatmentSummary   String?
+  
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+enum AdmissionType {
+  EMERGENCY
+  SCHEDULED
+  TRANSFER
+  OBSERVATION
+}
+
+enum AdmissionStatus {
+  ADMITTED
+  DISCHARGED
+  TRANSFERRED
+  DECEASED
+}
+
+// ============ SURGERY MANAGEMENT ============
+
+model Surgery {
+  id              String        @id @default(cuid())
+  patientId       String
+  doctorId        String        // Primary surgeon
+  doctor          Doctor        @relation(fields: [doctorId], references: [id])
+  
+  surgeryDate     DateTime
+  surgeryType     String
+  procedure       String
+  duration        Int?          // Duration in minutes
+  status          SurgeryStatus @default(SCHEDULED)
+  
+  // Operating room
+  operatingRoom   String?
+  anesthesiaType  String?
+  
+  // Team
+  assistingSurgeons String[]     // List of assisting doctors
+  anesthesiologist  String?
+  nurses            String[]
+  
+  // Documentation
+  preOpNotes      String?
+  postOpNotes     String?
+  complications   String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum SurgeryStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+// ============ BILLING & FINANCIAL ============
+
+model Bill {
+  id              String        @id @default(cuid())
+  patientId       String
+  patient         Patient       @relation(fields: [patientId], references: [id])
+  
+  billNumber      String        @unique
+  billDate        DateTime      @default(now())
+  dueDate         DateTime
+  status          BillStatus    @default(PENDING)
+  
+  // Amounts
+  subtotal        Decimal
+  tax             Decimal       @default(0)
+  discount        Decimal       @default(0)
+  totalAmount     Decimal
+  paidAmount      Decimal       @default(0)
+  
+  // Insurance
+  insuranceClaim  String?
+  insurancePaid   Decimal       @default(0)
+  
+  // Items
+  items           BillItem[]
+  payments        Payment[]
+  
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum BillStatus {
+  PENDING
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+  PARTIAL
+}
+
+model BillItem {
+  id          String      @id @default(cuid())
+  billId      String
+  bill        Bill        @relation(fields: [billId], references: [id])
+  
+  description String
+  itemType    BillItemType
+  referenceId String?     // Reference to appointment, prescription, etc.
+  quantity    Int         @default(1)
+  unitPrice   Decimal
+  totalPrice  Decimal
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum BillItemType {
+  CONSULTATION
+  PROCEDURE
+  MEDICATION
+  LAB_TEST
+  RADIOLOGY
+  ROOM_CHARGE
+  SURGERY
+  OTHER
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  billId        String
+  bill          Bill          @relation(fields: [billId], references: [id])
+  
+  amount        Decimal
+  paymentDate   DateTime      @default(now())
+  paymentMethod PaymentMethod
+  referenceNumber String?
+  notes         String?
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  CHECK
+  INSURANCE
+  OTHER
+}
+
+// ============ COMPLIANCE & AUDIT LOGS ============
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  
+  action      String      // CREATE, READ, UPDATE, DELETE
+  module      String      // patients, pharmacy, lab, etc.
+  resourceId  String?     // ID of the affected resource
+  resourceType String?    // Patient, Prescription, etc.
+  
+  details     Json?       // Additional details about the action
+  ipAddress   String?
+  userAgent   String?
+  
+  timestamp   DateTime    @default(now())
+}
+
+// ============ NOTIFICATIONS ============
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      Int
+  title       String
+  message     String
+  type        NotificationType
+  priority    NotificationPriority @default(NORMAL)
+  
+  isRead      Boolean             @default(false)
+  readAt      DateTime?
+  
+  // Metadata
+  data        Json?               // Additional data for the notification
+  
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  LAB_RESULT
+  PRESCRIPTION_READY
+  BILL_DUE
+  SYSTEM_ALERT
+  GENERAL
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
