@@ -4,11 +4,10 @@ A comprehensive, full-stack hospital management system built with **Flutter** (f
 
 ## ⚠️ Implementation Status: IN PROGRESS
 
-### Important — Development Status
-This project is actively under development. The application contains many implemented features and demo data, but it is not yet production-ready. Use the demo/developer mode for testing and role-play only. Expect breaking changes as features are completed and refined.
+### Current state
+The repository is actively developed and contains a Flutter frontend and a Node.js/TypeScript backend. The application implements authentication, role-based dashboards, appointment scheduling, patient management, prescriptions, pharmacy inventory, laboratory orders and results, billing, reporting, notifications, and developer/demo tools (including deterministic demo user names and mock API responses).
 
-### Overview
-Work in progress: the application includes many implemented features and substantial demo data. Some components, integrations, and tests are still being developed or stabilized.
+The codebase includes demo data seeding scripts and automated tests. Static analysis and test tools are available; run `flutter analyze` and `npx tsc --noEmit` locally to inspect issues.
 
 ## 🚀 Quick Start
 
