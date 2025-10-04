@@ -14,9 +14,8 @@ class AppTheme {
       tertiary: const Color(0xFF34C759), // Medical green
       error: const Color(0xFFFF3B30),
       surface: Colors.white,
-      surfaceVariant: const Color(0xFFF2F2F7),
+      surfaceContainerHighest: const Color(0xFFF2F2F7),
       outline: const Color(0xFFE5E5EA),
-      background: const Color(0xFFF8F9FA),
     );
 
     return ThemeData(
@@ -25,21 +24,21 @@ class AppTheme {
       colorScheme: lightColorScheme,
       fontFamily: 'Inter',
 
-      scaffoldBackgroundColor: lightColorScheme.background,
+      scaffoldBackgroundColor: lightColorScheme.surface,
 
       // AppBar Theme
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
           letterSpacing: 0.15,
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.white),
         surfaceTintColor: Colors.transparent,
       ),
 
@@ -61,7 +60,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: lightColorScheme.surfaceVariant.withOpacity(0.5),
+        fillColor: lightColorScheme.surfaceContainerHighest.withOpacity(0.5),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
@@ -74,7 +73,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -115,7 +114,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryBlue,
-          side: BorderSide(color: AppColors.primaryBlue),
+          side: const BorderSide(color: AppColors.primaryBlue),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -176,9 +175,9 @@ class AppTheme {
         backgroundColor: Colors.white,
         indicatorColor: AppColors.primaryBlue.withOpacity(0.2),
         height: 80,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return TextStyle(
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.primaryBlue,
@@ -190,9 +189,9 @@ class AppTheme {
             color: lightColorScheme.onSurface.withOpacity(0.6),
           );
         }),
-        iconTheme: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return IconThemeData(color: AppColors.primaryBlue);
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.primaryBlue);
           }
           return IconThemeData(
             color: lightColorScheme.onSurface.withOpacity(0.6),
@@ -202,7 +201,7 @@ class AppTheme {
 
       // Chip Theme
       chipTheme: ChipThemeData(
-        backgroundColor: lightColorScheme.surfaceVariant,
+        backgroundColor: lightColorScheme.surfaceContainerHighest,
         selectedColor: AppColors.primaryBlue.withOpacity(0.2),
         deleteIconColor: lightColorScheme.onSurface.withOpacity(0.6),
         labelStyle: TextStyle(
@@ -236,25 +235,25 @@ class AppTheme {
 
       // Switch Theme
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return Colors.white;
           }
           return lightColorScheme.outline;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return AppColors.primaryBlue;
           }
-          return lightColorScheme.surfaceVariant;
+          return lightColorScheme.surfaceContainerHighest;
         }),
       ),
 
       // Progress Indicator Theme
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: AppColors.primaryBlue,
-        linearTrackColor: lightColorScheme.surfaceVariant,
-        circularTrackColor: lightColorScheme.surfaceVariant,
+        linearTrackColor: lightColorScheme.surfaceContainerHighest,
+        circularTrackColor: lightColorScheme.surfaceContainerHighest,
       ),
 
       // Snackbar Theme
@@ -306,9 +305,9 @@ class AppTheme {
       // Time Picker Theme
       timePickerTheme: TimePickerThemeData(
         backgroundColor: Colors.white,
-        dialBackgroundColor: lightColorScheme.surfaceVariant,
+        dialBackgroundColor: lightColorScheme.surfaceContainerHighest,
         dialHandColor: AppColors.primaryBlue,
-        hourMinuteColor: lightColorScheme.surfaceVariant,
+        hourMinuteColor: lightColorScheme.surfaceContainerHighest,
         hourMinuteTextColor: lightColorScheme.onSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -319,7 +318,7 @@ class AppTheme {
       tabBarTheme: TabBarTheme(
         labelColor: AppColors.primaryBlue,
         unselectedLabelColor: lightColorScheme.onSurface.withOpacity(0.6),
-        indicator: UnderlineTabIndicator(
+        indicator: const UnderlineTabIndicator(
           borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
         ),
         labelStyle: const TextStyle(
@@ -333,10 +332,10 @@ class AppTheme {
       ),
 
       // Drawer Theme
-      drawerTheme: DrawerThemeData(
+      drawerTheme: const DrawerThemeData(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topRight: Radius.circular(16),
             bottomRight: Radius.circular(16),
@@ -357,9 +356,8 @@ class AppTheme {
       tertiary: const Color(0xFF32D74B), // Medical green (dark)
       error: const Color(0xFFFF453A),
       surface: const Color(0xFF1C1C1E),
-      surfaceVariant: const Color(0xFF2C2C2E),
+      surfaceContainerHighest: const Color(0xFF2C2C2E),
       outline: const Color(0xFF48484A),
-      background: const Color(0xFF000000),
     );
 
     return ThemeData(
@@ -368,21 +366,21 @@ class AppTheme {
       colorScheme: darkColorScheme,
       fontFamily: 'Inter',
 
-      scaffoldBackgroundColor: darkColorScheme.background,
+      scaffoldBackgroundColor: darkColorScheme.surface,
 
       // AppBar Theme
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
           letterSpacing: 0.15,
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.white),
         surfaceTintColor: Colors.transparent,
       ),
 
@@ -404,7 +402,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: darkColorScheme.surfaceVariant.withOpacity(0.5),
+        fillColor: darkColorScheme.surfaceContainerHighest.withOpacity(0.5),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
@@ -417,7 +415,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

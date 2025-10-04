@@ -164,10 +164,10 @@ class _NotificationWidgetState extends State<_NotificationWidget>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [
-                    const Color(0xFF1F2A3F),
-                    const Color(0xFF101726),
+                    Color(0xFF1F2A3F),
+                    Color(0xFF101726),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,

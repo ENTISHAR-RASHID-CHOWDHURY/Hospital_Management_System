@@ -211,13 +211,13 @@ class _PatientCardState extends State<PatientCard>
                                 const SizedBox(width: 4),
                                 Text(
                                   '${widget.age} years • ${widget.gender}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 14,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
-                                Icon(
+                                const Icon(
                                   Icons.bloodtype,
                                   color: AppColors.accentPink,
                                   size: 16,
@@ -225,7 +225,7 @@ class _PatientCardState extends State<PatientCard>
                                 const SizedBox(width: 4),
                                 Text(
                                   widget.bloodType,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: AppColors.accentPink,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -236,7 +236,7 @@ class _PatientCardState extends State<PatientCard>
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.access_time,
                                   color: Colors.white54,
                                   size: 14,
@@ -244,7 +244,7 @@ class _PatientCardState extends State<PatientCard>
                                 const SizedBox(width: 4),
                                 Text(
                                   'Last visit: ${_formatDate(widget.lastVisit)}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white54,
                                     fontSize: 12,
                                   ),
@@ -252,7 +252,7 @@ class _PatientCardState extends State<PatientCard>
                                 const Spacer(),
                                 Text(
                                   'ID: ${widget.patientId}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white54,
                                     fontSize: 12,
                                     fontFamily: 'monospace',
@@ -265,7 +265,7 @@ class _PatientCardState extends State<PatientCard>
                       ),
 
                       // Arrow Icon
-                      Icon(
+                      const Icon(
                         Icons.arrow_forward_ios,
                         color: Colors.white54,
                         size: 16,

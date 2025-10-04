@@ -4,6 +4,7 @@ import '../../core/models/appointment.dart';
 import '../services/appointment_service.dart';
 import '../../core/services/api_service.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../../core/dev/demo_names.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) {
   final authState = ref.watch(authProvider);
@@ -226,7 +227,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: _getStatusColor(appointment.status),
-          child: Icon(
+          child: const Icon(
             Icons.schedule,
             color: Colors.white,
           ),
@@ -309,31 +310,22 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
       return '${appointment.patient!.firstName} ${appointment.patient!.lastName}';
     }
     // Demo names based on patient ID
-    switch (appointment.patientId) {
-      case '1':
-        return 'John Smith';
-      case '2':
-        return 'Emily Johnson';
-      case '3':
-        return 'Michael Brown';
-      default:
-        return 'Patient ${appointment.patientId}';
+    // Use deterministic demo name mapping keyed by patientId
+    if (appointment.patientId.isNotEmpty) {
+      return getDemoDisplayName(appointment.patientId);
     }
+    return 'Patient ${appointment.patientId}';
   }
 
   String _getDoctorName(Appointment appointment) {
     if (appointment.doctor != null) {
       return 'Dr. ${appointment.doctor!.firstName} ${appointment.doctor!.lastName}';
     }
-    // Demo names based on doctor ID
-    switch (appointment.doctorId) {
-      case '1':
-        return 'Dr. Sarah Wilson';
-      case '2':
-        return 'Dr. David Lee';
-      default:
-        return 'Dr. ${appointment.doctorId}';
+    // Demo names based on doctorId via demo helper
+    if (appointment.doctorId.isNotEmpty) {
+      return 'Dr. ${getDemoDisplayName(appointment.doctorId)}';
     }
+    return 'Dr. ${appointment.doctorId}';
   }
 
   void _showAppointmentDetails(Appointment appointment) {

@@ -1,0 +1,6 @@
+@echo off
+echo Starting Hospital Management System Backend...
+cd /d "C:\Users\User\Hospital_Management_System\hospital_backend"
+echo Current directory: %cd%
+echo Starting backend server...
+npm run dev

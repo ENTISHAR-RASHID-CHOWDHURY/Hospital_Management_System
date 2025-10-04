@@ -20,11 +20,34 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   String _searchQuery = '';
+  List<Doctor> _doctors = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadDoctors();
+  }
+
+  Future<void> _loadDoctors() async {
+    setState(() => _isLoading = true);
+    try {
+      // TODO: Implement API call to fetch doctors
+      // final doctors = await doctorService.getDoctors();
+      // setState(() {
+      //   _doctors = doctors;
+      //   _isLoading = false;
+      // });
+
+      // For now, start with empty list - will be populated from backend
+      setState(() {
+        _doctors = [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -77,17 +100,19 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen>
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDoctorsList(
-                    MockDoctorData.doctors.where((d) => d.isOnDuty).toList()),
-                _buildDoctorsList(MockDoctorData.doctors
-                    .where((d) => d.status == DoctorStatus.available)
-                    .toList()),
-                _buildDoctorsList(MockDoctorData.doctors),
-              ],
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildDoctorsList(
+                          _doctors.where((d) => d.isOnDuty).toList()),
+                      _buildDoctorsList(_doctors
+                          .where((d) => d.status == DoctorStatus.available)
+                          .toList()),
+                      _buildDoctorsList(_doctors),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -96,14 +121,12 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen>
   }
 
   Widget _buildQuickStats() {
-    final onDutyCount = MockDoctorData.doctors.where((d) => d.isOnDuty).length;
-    final availableCount = MockDoctorData.doctors
-        .where((d) => d.status == DoctorStatus.available)
-        .length;
-    final inSurgeryCount = MockDoctorData.doctors
-        .where((d) => d.status == DoctorStatus.inSurgery)
-        .length;
-    final totalCount = MockDoctorData.doctors.length;
+    final onDutyCount = _doctors.where((d) => d.isOnDuty).length;
+    final availableCount =
+        _doctors.where((d) => d.status == DoctorStatus.available).length;
+    final inSurgeryCount =
+        _doctors.where((d) => d.status == DoctorStatus.inSurgery).length;
+    final totalCount = _doctors.length;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

@@ -31,7 +31,7 @@ class FeaturePlaceholderScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.construction_rounded,
+              const Icon(Icons.construction_rounded,
                   size: 64, color: AppColors.accentTeal),
               const SizedBox(height: 16),
               Text(

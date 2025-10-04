@@ -48,6 +48,18 @@ List<DashboardOption> _getDefaultOptions() {
       routeName: '/medical-records',
     ),
     const DashboardOption(
+      title: 'Pharmacy',
+      description: 'Manage medications, prescriptions, and inventory',
+      iconName: 'medication',
+      routeName: AppRoutes.pharmacy,
+    ),
+    const DashboardOption(
+      title: 'Laboratory',
+      description: 'Manage lab orders, results, and test tracking',
+      iconName: 'science',
+      routeName: AppRoutes.laboratory,
+    ),
+    const DashboardOption(
       title: 'Emergency',
       description: 'Quick access for emergency situations',
       iconName: 'local_hospital',

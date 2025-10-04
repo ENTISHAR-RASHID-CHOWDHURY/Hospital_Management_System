@@ -1,0 +1,6 @@
+@echo off
+echo Starting Hospital Management System Frontend...
+cd /d "C:\Users\User\Hospital_Management_System\hospital_app"
+echo Current directory: %cd%
+echo Starting Flutter app...
+flutter run

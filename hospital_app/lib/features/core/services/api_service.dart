@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/patient.dart';
 
 class ApiService {
   static const String baseUrl = 'http://localhost:3001/api';

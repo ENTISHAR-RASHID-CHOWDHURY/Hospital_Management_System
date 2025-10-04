@@ -42,15 +42,13 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
     };
 
 const _$UserRoleEnumMap = {
-  UserRole.SUPER_ADMIN: 'SUPER_ADMIN',
-  UserRole.DOCTOR: 'DOCTOR',
-  UserRole.NURSE: 'NURSE',
-  UserRole.PHARMACIST: 'PHARMACIST',
-  UserRole.LAB_TECHNICIAN: 'LAB_TECHNICIAN',
-  UserRole.RECEPTIONIST: 'RECEPTIONIST',
-  UserRole.BILLING_MANAGER: 'BILLING_MANAGER',
-  UserRole.FACILITY_MANAGER: 'FACILITY_MANAGER',
-  UserRole.ACCOUNTANT: 'ACCOUNTANT',
+  UserRole.ADMIN: 'admin',
+  UserRole.DOCTOR: 'doctor',
+  UserRole.NURSE: 'nurse',
+  UserRole.RECEPTIONIST: 'receptionist',
+  UserRole.PHARMACIST: 'pharmacist',
+  UserRole.LABORATORY: 'laboratory',
+  UserRole.PATIENT: 'patient',
 };
 
 _$LoginRequestImpl _$$LoginRequestImplFromJson(Map<String, dynamic> json) =>
@@ -70,6 +68,7 @@ _$LoginResponseImpl _$$LoginResponseImplFromJson(Map<String, dynamic> json) =>
       user: User.fromJson(json['user'] as Map<String, dynamic>),
       token: json['token'] as String,
       refreshToken: json['refreshToken'] as String,
+      expiresIn: (json['expiresIn'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$LoginResponseImplToJson(_$LoginResponseImpl instance) =>
@@ -77,6 +76,7 @@ Map<String, dynamic> _$$LoginResponseImplToJson(_$LoginResponseImpl instance) =>
       'user': instance.user,
       'token': instance.token,
       'refreshToken': instance.refreshToken,
+      'expiresIn': instance.expiresIn,
     };
 
 _$ChangePasswordRequestImpl _$$ChangePasswordRequestImplFromJson(

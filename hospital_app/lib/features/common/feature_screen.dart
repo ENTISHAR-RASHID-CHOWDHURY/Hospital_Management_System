@@ -47,7 +47,7 @@ class FeatureScreen extends StatelessWidget {
                     width: 2,
                   ),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.construction,
                   size: 50,
                   color: AppColors.primaryBlue,
@@ -55,7 +55,7 @@ class FeatureScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               Text(
-                '$displayName',
+                displayName,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

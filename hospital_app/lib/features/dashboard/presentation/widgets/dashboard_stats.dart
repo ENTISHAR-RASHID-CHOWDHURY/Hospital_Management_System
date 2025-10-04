@@ -14,7 +14,7 @@ class _DashboardStatsState extends State<DashboardStats>
   late List<Animation<double>> _countAnimations;
 
   final List<StatItem> _stats = [
-    StatItem(
+    const StatItem(
       title: 'Total Patients',
       value: 1234,
       icon: Icons.people,
@@ -22,7 +22,7 @@ class _DashboardStatsState extends State<DashboardStats>
       trend: '+12%',
       isPositive: true,
     ),
-    StatItem(
+    const StatItem(
       title: 'Today\'s Appointments',
       value: 48,
       icon: Icons.calendar_today,
@@ -30,7 +30,7 @@ class _DashboardStatsState extends State<DashboardStats>
       trend: '+8%',
       isPositive: true,
     ),
-    StatItem(
+    const StatItem(
       title: 'Available Beds',
       value: 24,
       icon: Icons.hotel,
@@ -38,7 +38,7 @@ class _DashboardStatsState extends State<DashboardStats>
       trend: '-3%',
       isPositive: false,
     ),
-    StatItem(
+    const StatItem(
       title: 'Staff on Duty',
       value: 156,
       icon: Icons.medical_services,
@@ -117,10 +117,10 @@ class _DashboardStatsState extends State<DashboardStats>
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [
-                const Color(0xFF1F2A3F),
-                const Color(0xFF101726),
+                Color(0xFF1F2A3F),
+                Color(0xFF101726),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -206,7 +206,7 @@ class _DashboardStatsState extends State<DashboardStats>
               const SizedBox(height: 4),
               Text(
                 stat.title,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,

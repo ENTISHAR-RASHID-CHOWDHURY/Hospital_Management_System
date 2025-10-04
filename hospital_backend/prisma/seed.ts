@@ -198,42 +198,70 @@ async function main() {
       password: 'admin123',
       firstName: 'Admin',
       lastName: 'User',
-      role: 'admin'
+      role: 'SUPER_ADMIN'
     },
     {
       email: 'doctor@hospital.com',
       password: 'doctor123',
       firstName: 'Dr. John',
       lastName: 'Smith',
-      role: 'doctor'
+      role: 'DOCTOR'
     },
     {
       email: 'nurse@hospital.com',
       password: 'nurse123',
       firstName: 'Sarah',
       lastName: 'Johnson',
-      role: 'nurse'
-    },
-    {
-      email: 'patient@hospital.com',
-      password: 'patient123',
-      firstName: 'Michael',
-      lastName: 'Brown',
-      role: 'patient'
+      role: 'NURSE'
     },
     {
       email: 'receptionist@hospital.com',
       password: 'receptionist123',
       firstName: 'Lisa',
       lastName: 'Davis',
-      role: 'receptionist'
+      role: 'RECEPTIONIST'
     },
     {
       email: 'pharmacist@hospital.com',
       password: 'pharmacist123',
       firstName: 'David',
       lastName: 'Wilson',
-      role: 'pharmacist'
+      role: 'PHARMACIST'
+    },
+    {
+      email: 'lab@hospital.com',
+      password: 'lab123',
+      firstName: 'Robert',
+      lastName: 'Martinez',
+      role: 'LAB_TECHNICIAN'
+    },
+    {
+      email: 'billing@hospital.com',
+      password: 'billing123',
+      firstName: 'Jennifer',
+      lastName: 'Anderson',
+      role: 'BILLING_MANAGER'
+    },
+    {
+      email: 'facility@hospital.com',
+      password: 'facility123',
+      firstName: 'Thomas',
+      lastName: 'Taylor',
+      role: 'FACILITY_MANAGER'
+    },
+    {
+      email: 'accountant@hospital.com',
+      password: 'accountant123',
+      firstName: 'Patricia',
+      lastName: 'White',
+      role: 'ACCOUNTANT'
+    },
+    {
+      email: 'patient@hospital.com',
+      password: 'patient123',
+      firstName: 'Michael',
+      lastName: 'Brown',
+      role: 'PATIENT'
     }
   ];
 

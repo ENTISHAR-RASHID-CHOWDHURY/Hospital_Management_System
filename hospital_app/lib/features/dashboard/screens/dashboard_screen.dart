@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/providers/auth_provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/theme_provider.dart';
 import '../../patients/presentation/patients_screen.dart';
 import '../../doctors/presentation/doctors_screen.dart';
 import '../../appointments/presentation/appointments_screen.dart';
-import '../../reports/presentation/reports_screen.dart';
-import '../../common/screens/dev_settings_screen.dart';
+import '../../reports/presentation/reports_main_screen.dart';
+import '../../notifications/notifications_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -74,10 +75,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Hospital Management System'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Implement notifications
+          // Notifications with badge
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
+                    ),
+                  );
+                },
+              ),
+              // Notification badge
+              Consumer(
+                builder: (context, ref, child) {
+                  final notificationsState = ref.watch(notificationsProvider);
+                  final unreadCount = notificationsState.unreadCount;
+
+                  if (unreadCount == 0) return const SizedBox.shrink();
+
+                  return Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          // Theme toggle button
+          Consumer(
+            builder: (context, ref, child) {
+              final themeModeState = ref.watch(themeModeProvider);
+              final isDark = themeModeState.themeMode == ThemeMode.dark;
+
+              return IconButton(
+                icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+                onPressed: () {
+                  ref.read(themeModeProvider.notifier).toggleTheme();
+                },
+                tooltip: isDark ? 'Light Mode' : 'Dark Mode',
+              );
             },
           ),
           PopupMenuButton<String>(
@@ -86,14 +146,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               switch (value) {
                 case 'profile':
                   _showProfileDialog(context);
-                  break;
-                case 'settings':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DevSettingsScreen(),
-                    ),
-                  );
                   break;
                 case 'logout':
                   _handleLogout(context, ref);
@@ -108,16 +160,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Icon(Icons.person_outline),
                     SizedBox(width: 8),
                     Text('Profile'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings_outlined),
-                    SizedBox(width: 8),
-                    Text('Settings'),
                   ],
                 ),
               ),
@@ -143,7 +185,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           PatientsScreen(),
           DoctorsScreen(),
           AppointmentsScreen(),
-          ReportsScreen(),
+          ReportsMainScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
