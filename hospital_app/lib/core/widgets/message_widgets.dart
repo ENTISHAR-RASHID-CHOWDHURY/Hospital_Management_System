@@ -26,7 +26,7 @@ class ErrorMessage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             color: AppColors.accentPink,
             size: 20,
@@ -35,7 +35,7 @@ class ErrorMessage extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.accentPink,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -85,7 +85,7 @@ class SuccessMessage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle_outline,
             color: AppColors.accentTeal,
             size: 20,
@@ -94,7 +94,7 @@ class SuccessMessage extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.accentTeal,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

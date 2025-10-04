@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../data/auth_user.dart';
+import '../../../../core/models/auth_models.dart';
+import '../../../auth/data/auth_user.dart';
 
 class RoleSelector extends StatelessWidget {
   const RoleSelector({

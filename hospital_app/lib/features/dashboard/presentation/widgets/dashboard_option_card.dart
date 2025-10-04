@@ -53,7 +53,7 @@ class _DashboardOptionCardState extends State<DashboardOptionCard>
         builder: (context, child) {
           return Transform.scale(
             scale: _scaleAnimation.value,
-            child: Container(
+            child: SizedBox(
               width: double.infinity,
               height: 160,
               child: InkWell(

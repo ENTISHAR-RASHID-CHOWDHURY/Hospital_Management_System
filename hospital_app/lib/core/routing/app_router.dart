@@ -9,6 +9,7 @@ import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/patients/presentation/patients_screen.dart';
 import '../../features/doctors/presentation/doctors_screen.dart';
 import '../../features/pharmacy/presentation/pharmacy_screen.dart';
+import '../../features/laboratory/screens/laboratory_screen.dart';
 import 'app_routes.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -49,6 +50,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/pharmacy',
         name: '/pharmacy',
         builder: (context, state) => const PharmacyScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.laboratory,
+        name: AppRoutes.laboratory,
+        builder: (context, state) => const LaboratoryScreen(),
       ),
       GoRoute(
         path: '/staff',

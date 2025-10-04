@@ -49,34 +49,34 @@ class DashboardScreen extends ConsumerWidget {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             color: AppColors.surfaceDark,
             itemBuilder: (context) => [
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'profile',
                 child: Row(
                   children: [
                     Icon(Icons.person_outline, color: Colors.white70, size: 20),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Text('Profile', style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'settings',
                 child: Row(
                   children: [
                     Icon(Icons.settings_outlined,
                         color: Colors.white70, size: 20),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Text('Settings', style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ),
               const PopupMenuDivider(),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'logout',
                 child: Row(
                   children: [
                     Icon(Icons.logout, color: AppColors.accentPink, size: 20),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Text('Logout',
                         style: TextStyle(color: AppColors.accentPink)),
                   ],
@@ -142,8 +142,9 @@ class DashboardScreen extends ConsumerWidget {
                             return AnimatedList(
                               initialItemCount: options.length,
                               itemBuilder: (context, index, animation) {
-                                if (index >= options.length)
+                                if (index >= options.length) {
                                   return const SizedBox();
+                                }
                                 final option = options[index];
                                 final routeName = option.routeName.isEmpty
                                     ? AppRoutes.feature

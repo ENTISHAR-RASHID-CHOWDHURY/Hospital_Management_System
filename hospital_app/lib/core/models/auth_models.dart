@@ -4,28 +4,26 @@ part 'auth_models.freezed.dart';
 part 'auth_models.g.dart';
 
 enum UserRole {
-  @JsonValue('SUPER_ADMIN')
-  SUPER_ADMIN,
-  @JsonValue('DOCTOR')
+  @JsonValue('admin')
+  ADMIN,
+  @JsonValue('doctor')
   DOCTOR,
-  @JsonValue('NURSE')
+  @JsonValue('nurse')
   NURSE,
-  @JsonValue('PHARMACIST')
-  PHARMACIST,
-  @JsonValue('LAB_TECHNICIAN')
-  LAB_TECHNICIAN,
-  @JsonValue('RECEPTIONIST')
+  @JsonValue('receptionist')
   RECEPTIONIST,
-  @JsonValue('BILLING_MANAGER')
-  BILLING_MANAGER,
-  @JsonValue('FACILITY_MANAGER')
-  FACILITY_MANAGER,
-  @JsonValue('ACCOUNTANT')
-  ACCOUNTANT,
+  @JsonValue('pharmacist')
+  PHARMACIST,
+  @JsonValue('laboratory')
+  LABORATORY,
+  @JsonValue('patient')
+  PATIENT,
 }
 
 @freezed
 class User with _$User {
+  const User._();
+
   const factory User({
     required String id,
     required String email,
@@ -40,6 +38,9 @@ class User with _$User {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _User;
+
+  // Computed property for full name
+  String get fullName => '$firstName $lastName';
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 }
@@ -61,6 +62,7 @@ class LoginResponse with _$LoginResponse {
     required User user,
     required String token,
     required String refreshToken,
+    required int expiresIn,
   }) = _LoginResponse;
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) =>
@@ -102,36 +104,30 @@ class TokenResponse with _$TokenResponse {
 extension UserExtensions on User {
   String get fullName => '$firstName $lastName';
 
+  bool get isAdmin => role == UserRole.ADMIN;
   bool get isDoctor => role == UserRole.DOCTOR;
   bool get isNurse => role == UserRole.NURSE;
   bool get isPharmacist => role == UserRole.PHARMACIST;
-  bool get isLabTechnician => role == UserRole.LAB_TECHNICIAN;
+  bool get isLaboratory => role == UserRole.LABORATORY;
   bool get isReceptionist => role == UserRole.RECEPTIONIST;
-  bool get isBillingManager => role == UserRole.BILLING_MANAGER;
-  bool get isFacilityManager => role == UserRole.FACILITY_MANAGER;
-  bool get isAccountant => role == UserRole.ACCOUNTANT;
-  bool get isSuperAdmin => role == UserRole.SUPER_ADMIN;
+  bool get isPatient => role == UserRole.PATIENT;
 
   String get roleDisplayName {
     switch (role) {
-      case UserRole.SUPER_ADMIN:
-        return 'Super Admin';
+      case UserRole.ADMIN:
+        return 'Admin / Management';
       case UserRole.DOCTOR:
         return 'Doctor';
       case UserRole.NURSE:
-        return 'Nurse';
+        return 'Nurse / Medical Staff';
+      case UserRole.RECEPTIONIST:
+        return 'Reception / Front Desk';
       case UserRole.PHARMACIST:
         return 'Pharmacist';
-      case UserRole.LAB_TECHNICIAN:
-        return 'Lab Technician';
-      case UserRole.RECEPTIONIST:
-        return 'Receptionist';
-      case UserRole.BILLING_MANAGER:
-        return 'Billing Manager';
-      case UserRole.FACILITY_MANAGER:
-        return 'Facility Manager';
-      case UserRole.ACCOUNTANT:
-        return 'Accountant';
+      case UserRole.LABORATORY:
+        return 'Laboratory Staff';
+      case UserRole.PATIENT:
+        return 'Patient';
     }
   }
 }

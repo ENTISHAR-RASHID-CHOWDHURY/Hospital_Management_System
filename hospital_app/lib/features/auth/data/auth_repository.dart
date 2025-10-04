@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/services/local_storage_service.dart';
+import '../../../core/models/auth_models.dart';
 import 'auth_session.dart';
 import 'auth_user.dart';
 

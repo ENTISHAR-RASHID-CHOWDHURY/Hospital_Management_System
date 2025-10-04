@@ -1,21 +1,28 @@
 export const HOSPITAL_ROLES = [
-  'admin',
-  'doctor',
-  'nurse',
-  'receptionist',
-  'pharmacist',
-  'laboratory',
-  'patient',
+  'SUPER_ADMIN',
+  'DOCTOR',
+  'NURSE',
+  'RECEPTIONIST',
+  'PHARMACIST',
+  'LAB_TECHNICIAN',
+  'BILLING_MANAGER',
+  'FACILITY_MANAGER',
+  'ACCOUNTANT',
+  'PATIENT',
 ] as const;
 
 export type HospitalRole = (typeof HOSPITAL_ROLES)[number];
 
 export const ROLE_DISPLAY_NAMES: Record<HospitalRole, string> = {
-  admin: 'Admin / Management',
-  doctor: 'Doctor',
-  nurse: 'Nurse / Medical Staff',
-  receptionist: 'Reception / Front Desk',
-  pharmacist: 'Pharmacist',
-  laboratory: 'Laboratory Staff',
-  patient: 'Patient',
+  SUPER_ADMIN: 'Super Administrator',
+  DOCTOR: 'Doctor',
+  NURSE: 'Nurse',
+  RECEPTIONIST: 'Receptionist',
+  PHARMACIST: 'Pharmacist',
+  LAB_TECHNICIAN: 'Laboratory Technician',
+  BILLING_MANAGER: 'Billing Manager',
+  FACILITY_MANAGER: 'Facility Manager',
+  ACCOUNTANT: 'Accountant',
+  PATIENT: 'Patient',
 };
+

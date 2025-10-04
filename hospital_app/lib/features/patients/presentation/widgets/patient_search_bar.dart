@@ -104,7 +104,7 @@ class _PatientSearchBarState extends State<PatientSearchBar>
               ),
               decoration: InputDecoration(
                 hintText: widget.hintText,
-                hintStyle: TextStyle(
+                hintStyle: const TextStyle(
                   color: Colors.white54,
                   fontSize: 16,
                 ),
@@ -122,7 +122,7 @@ class _PatientSearchBarState extends State<PatientSearchBar>
                           _controller.clear();
                           widget.onSearchChanged('');
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.clear,
                           color: Colors.white54,
                           size: 20,
@@ -130,7 +130,7 @@ class _PatientSearchBarState extends State<PatientSearchBar>
                       )
                     : IconButton(
                         onPressed: () => _showAdvancedSearch(),
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.tune,
                           color: Colors.white54,
                           size: 20,

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Models
@@ -50,9 +51,9 @@ class User {
   bool get isPatient => role == 'PATIENT';
   bool get isReceptionist => role == 'RECEPTIONIST';
   bool get isPharmacist => role == 'PHARMACIST';
-  bool get isLabTechnician => role == 'LAB_TECHNICIAN';
+  bool get isLabTechnician => role == 'LAB_TECHNICIAN' || role == 'LABORATORY';
   bool get isBillingStaff => role == 'BILLING_MANAGER' || role == 'ACCOUNTANT';
-  bool get isAdmin => role == 'SUPER_ADMIN';
+  bool get isAdmin => role == 'SUPER_ADMIN' || role == 'ADMIN';
 }
 
 class AuthState {
@@ -61,6 +62,7 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final bool isDeveloperMode; // Track if user is in developer mode
 
   AuthState({
     this.user,
@@ -68,6 +70,7 @@ class AuthState {
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.isDeveloperMode = false, // Default to user mode
   });
 
   AuthState copyWith({
@@ -76,6 +79,7 @@ class AuthState {
     bool? isLoading,
     String? error,
     bool? isAuthenticated,
+    bool? isDeveloperMode,
   }) {
     return AuthState(
       user: user ?? this.user,
@@ -83,6 +87,7 @@ class AuthState {
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      isDeveloperMode: isDeveloperMode ?? this.isDeveloperMode,
     );
   }
 }
@@ -95,16 +100,18 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'email': email,
-          'password': password,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/login'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: json.encode({
+              'email': email,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 10)); // Add timeout
 
       final data = json.decode(response.body);
 
@@ -114,6 +121,9 @@ class AuthService {
         throw Exception(data['message'] ?? 'Login failed');
       }
     } catch (e) {
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Login timeout - please check your connection');
+      }
       throw Exception('Network error: $e');
     }
   }
@@ -186,7 +196,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final authData = await _authService.getStoredAuthData();
       if (authData.isAuthenticated && authData.token != null) {
-        // Verify token is still valid
+        // First, set the stored data immediately for faster loading
+        state = authData;
+
+        // Then verify token in background (optional - can be disabled for faster loading)
+        // Comment out the next block if you want even faster loading
+        /* 
         final user = await _authService.getCurrentUser(authData.token!);
         if (user != null) {
           state = authData.copyWith(user: user);
@@ -195,11 +210,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
           await _authService.logout();
           state = AuthState();
         }
+        */
       } else {
         state = AuthState();
       }
     } catch (e) {
-      state = AuthState(error: 'Failed to load stored authentication');
+      // On error, still try to use stored data if available
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userData = prefs.getString('user_data');
+
+      if (token != null && userData != null) {
+        try {
+          final user = User.fromJson(json.decode(userData));
+          state = AuthState(
+            user: user,
+            token: token,
+            isAuthenticated: true,
+            isLoading: false,
+          );
+        } catch (_) {
+          state = AuthState(error: 'Failed to load stored authentication');
+        }
+      } else {
+        state = AuthState(error: 'Failed to load stored authentication');
+      }
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -232,6 +267,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         token: token,
         isAuthenticated: true,
         isLoading: false,
+        isDeveloperMode: false, // Regular user mode
       );
 
       return true;
@@ -254,6 +290,95 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     state = AuthState();
+  }
+
+  // Developer mode: Allow role-playing as any demo user
+  Future<bool> loginAsDeveloper(String demoUserEmail, {String? role}) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      // Create a user object based on the demo email
+      final user = await _createDemoUserFromEmail(demoUserEmail, role: role);
+
+      if (user != null) {
+        state = AuthState(
+          user: user,
+          token: 'demo_token_${DateTime.now().millisecondsSinceEpoch}',
+          isAuthenticated: true,
+          isLoading: false,
+          isDeveloperMode: true, // Mark as developer mode
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          error: 'Failed to authenticate as demo user',
+          isLoading: false,
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Developer login failed: ${e.toString()}',
+        isLoading: false,
+      );
+      return false;
+    }
+  }
+
+  // Create a user object from demo user email
+  Future<User?> _createDemoUserFromEmail(String email, {String? role}) async {
+    try {
+      // Use provided role or extract role from email
+      String userRole = role ?? 'PATIENT'; // default
+
+      // If no role provided, try to extract from email (fallback)
+      if (role == null) {
+        if (email.contains('admin')) {
+          userRole = 'ADMIN';
+        } else if (email.contains('doctor')) {
+          userRole = 'DOCTOR';
+        } else if (email.contains('nurse')) {
+          userRole = 'NURSE';
+        } else if (email.contains('pharmacist')) {
+          userRole = 'PHARMACIST';
+        } else if (email.contains('lab')) {
+          userRole = 'LABORATORY';
+        } else if (email.contains('receptionist')) {
+          userRole = 'RECEPTIONIST';
+        }
+      }
+
+      // Generate demo user data
+      final nameParts = email.split('@')[0].replaceAll('.', ' ').split(' ');
+      final firstName =
+          nameParts.isNotEmpty ? nameParts[0].toUpperCase() : 'Demo';
+      final lastName =
+          nameParts.length > 1 ? nameParts[1].toUpperCase() : 'User';
+
+      final user = User(
+        id: 'demo_${DateTime.now().millisecondsSinceEpoch}',
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        role: userRole,
+        avatar: null,
+      );
+
+      return user;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Developer mode: Set user directly without authentication
+  void setDeveloperUser(User user, String token) {
+    state = AuthState(
+      user: user,
+      token: token,
+      isAuthenticated: true,
+      isLoading: false,
+      isDeveloperMode: true, // Mark as developer mode
+    );
   }
 
   void clearError() {

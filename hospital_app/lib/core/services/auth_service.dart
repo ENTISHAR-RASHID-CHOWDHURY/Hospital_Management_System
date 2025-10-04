@@ -11,7 +11,10 @@ class AuthService {
   /// Login with email and password
   Future<LoginResponse> login(String email, String password) async {
     try {
-      final request = LoginRequest(email: email, password: password);
+      final request = LoginRequest(
+        email: email,
+        password: password,
+      );
 
       final response = await _dio.post(
         ApiConfig.loginEndpoint,
@@ -94,6 +97,58 @@ class AuthService {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Register new user account
+  Future<LoginResponse> register({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    required String phone,
+    required String role,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConfig.registerEndpoint,
+        data: {
+          'email': email,
+          'password': password,
+          'firstName': firstName,
+          'lastName': lastName,
+          'phone': phone,
+          'role': role,
+        },
+      );
+
+      return LoginResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    } catch (e) {
+      throw ApiException.unknown(e.toString());
+    }
+  }
+
+  /// Delete user account
+  Future<void> deleteAccount({
+    required String password,
+    required String reason,
+    String? additionalInfo,
+  }) async {
+    try {
+      await _dio.delete(
+        ApiConfig.deleteAccountEndpoint,
+        data: {
+          'password': password,
+          'reason': reason,
+          if (additionalInfo != null) 'additionalInfo': additionalInfo,
+        },
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    } catch (e) {
+      throw ApiException.unknown(e.toString());
     }
   }
 }

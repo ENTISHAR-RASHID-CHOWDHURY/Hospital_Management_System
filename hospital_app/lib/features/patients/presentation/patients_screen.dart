@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/dev/demo_names.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
-import 'widgets/patient_card.dart';
 import 'widgets/patient_search_bar.dart';
 import 'widgets/add_patient_fab.dart';
+import 'patient_details_screen.dart';
 
 class PatientsScreen extends ConsumerStatefulWidget {
   const PatientsScreen({super.key});
@@ -160,7 +161,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen>
         ),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white70,
             fontSize: 12,
           ),
@@ -170,74 +171,171 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen>
   }
 
   Widget _buildPatientsList(String type) {
-    // Mock data for demonstration
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 10,
-      itemBuilder: (context, index) {
-        final patientName = _getMockPatientName(index);
-
-        // Filter based on search query
-        if (_searchQuery.isNotEmpty &&
-            !patientName.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-            !'P${1000 + index}'
+    // Implement search filtering with mock data for demo
+    final filteredPatients = _getMockPatients(type)
+        .where((patient) =>
+            _searchQuery.isEmpty ||
+            patient['name']
                 .toLowerCase()
-                .contains(_searchQuery.toLowerCase())) {
-          return const SizedBox.shrink();
-        }
+                .contains(_searchQuery.toLowerCase()) ||
+            patient['id'].toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
 
+    if (filteredPatients.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.person_search,
+              size: 64,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'No patients found'
+                  : 'No patients match your search',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'Patients will be loaded from the backend'
+                  : 'Try adjusting your search terms',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: filteredPatients.length,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemBuilder: (context, index) {
+        final patient = filteredPatients[index];
         return PatientCard(
-          patientId: 'P${1000 + index}',
-          fullName: patientName,
-          age: 25 + (index % 50),
-          gender: index % 2 == 0 ? 'Male' : 'Female',
-          bloodType: _getMockBloodType(index),
-          lastVisit: DateTime.now().subtract(Duration(days: index + 1)),
-          status: _getMockPatientStatus(index, type),
-          onTap: () => _showPatientDetails('P${1000 + index}'),
+          patientId: patient['id'],
+          fullName: patient['name'],
+          age: patient['age'],
+          gender: patient['gender'],
+          bloodType: patient['bloodType'],
+          lastVisit: patient['lastVisit'],
+          status: patient['status'],
+          onTap: () => _showPatientDetails(patient['id']),
         );
       },
     );
   }
 
-  String _getMockPatientName(int index) {
-    final names = [
-      'John Smith',
-      'Emily Johnson',
-      'Michael Brown',
-      'Sarah Davis',
-      'David Wilson',
-      'Lisa Anderson',
-      'Robert Taylor',
-      'Jennifer White',
-      'Christopher Martinez',
-      'Amanda Thompson'
+  List<Map<String, dynamic>> _getMockPatients(String type) {
+    // Mock patient data based on type
+    final basePatients = [
+      {
+        'id': 'P001',
+        'name': getDemoDisplayName('P001'),
+        'age': 45,
+        'gender': 'Male',
+        'bloodType': 'A+',
+        'lastVisit': DateTime.now().subtract(const Duration(days: 2)),
+        'status': type == 'critical' ? 'Critical' : 'Stable',
+      },
+      {
+        'id': 'P002',
+        'name': getDemoDisplayName('P002'),
+        'age': 32,
+        'gender': 'Female',
+        'bloodType': 'B+',
+        'lastVisit': DateTime.now().subtract(const Duration(days: 5)),
+        'status': 'Stable',
+      },
+      {
+        'id': 'P003',
+        'name': getDemoDisplayName('P003'),
+        'age': 67,
+        'gender': 'Male',
+        'bloodType': 'O-',
+        'lastVisit': DateTime.now().subtract(const Duration(days: 1)),
+        'status': type == 'critical' ? 'Critical' : 'Stable',
+      },
     ];
-    return names[index % names.length];
+
+    // Filter based on type
+    switch (type) {
+      case 'recent':
+        return basePatients
+            .where((p) =>
+                DateTime.now().difference(p['lastVisit'] as DateTime).inDays <=
+                3)
+            .toList();
+      case 'critical':
+        return basePatients.where((p) => p['status'] == 'Critical').toList();
+      default:
+        return basePatients;
+    }
   }
 
-  String _getMockBloodType(int index) {
-    final bloodTypes = ['A+', 'B+', 'AB+', 'O+', 'A-', 'B-', 'AB-', 'O-'];
-    return bloodTypes[index % bloodTypes.length];
-  }
-
-  String _getMockPatientStatus(int index, String type) {
-    if (type == 'critical') return 'Critical';
-    if (type == 'recent') return 'Active';
-
-    final statuses = [
-      'Active',
-      'Stable',
-      'Recovering',
-      'Critical',
-      'Discharged'
-    ];
-    return statuses[index % statuses.length];
+  Widget PatientCard({
+    required String patientId,
+    required String fullName,
+    required int age,
+    required String gender,
+    required String bloodType,
+    required DateTime lastVisit,
+    required String status,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: AppColors.surfaceDark,
+      child: ListTile(
+        onTap: onTap,
+        leading: CircleAvatar(
+          backgroundColor: AppColors.primaryBlue,
+          child: Text(
+            fullName.split(' ').map((n) => n[0]).join(),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+        title: Text(
+          fullName,
+          style:
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          '$age years • $gender • $bloodType',
+          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: status == 'Critical' ? AppColors.error : AppColors.success,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            status,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showPatientDetails(String patientId) {
-    // Navigate to patient details
-    print('Show details for patient: $patientId');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PatientDetailsScreen(patientId: patientId),
+      ),
+    );
   }
 
   void _showFilterDialog() {

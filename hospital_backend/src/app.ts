@@ -11,14 +11,14 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import pharmacyRoutes from './routes/pharmacy_minimal';
 import patientRoutes from './routes/patients_fixed';
-// import doctorRoutes from './routes/doctors';
-// import appointmentRoutes from './routes/appointments';
-// import labRoutes from './routes/laboratory';
-// import staffRoutes from './routes/staff';
-// import billingRoutes from './routes/billing';
-// import facilityRoutes from './routes/facility';
-// import reportsRoutes from './routes/reports';
-// import notificationRoutes from './routes/notifications';
+import doctorRoutes from './routes/doctors';
+import appointmentRoutes from './routes/appointments';
+import labRoutes from './routes/laboratory';
+import staffRoutes from './routes/staff';
+import billingRoutes from './routes/billing';
+import facilityRoutes from './routes/facility';
+import reportsRoutes from './routes/reports';
+import notificationRoutes from './routes/notifications';
 import { authenticate } from './middleware/auth.middleware';
 
 // Import middleware
@@ -37,14 +37,20 @@ export function createApp() {
   app.use(helmet());
 
   // CORS configuration - Allow all localhost and 127.0.0.1 ports for development
+  // Specially configured for Flutter dynamic ports (e.g., localhost:61228, localhost:3000, etc.)
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       
       // Allow any localhost or 127.0.0.1 origin in development
+      // This handles Flutter's dynamic port allocation (e.g., localhost:61228, localhost:3000, etc.)
       if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
-        if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        if (origin.startsWith('http://localhost:') || 
+            origin.startsWith('http://127.0.0.1:') ||
+            origin.startsWith('https://localhost:') ||
+            origin.startsWith('https://127.0.0.1:')) {
+          console.log(`✅ CORS: Allowing development origin: ${origin}`);
           return callback(null, true);
         }
       }
@@ -53,19 +59,41 @@ export function createApp() {
       const allowedOrigins = [
         'http://localhost:8080',
         'http://127.0.0.1:8080',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
         process.env.FRONTEND_URL
       ].filter(Boolean);
       
       if (allowedOrigins.includes(origin)) {
+        console.log(`✅ CORS: Allowing configured origin: ${origin}`);
         return callback(null, true);
       }
       
+      console.log(`❌ CORS: Rejecting origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
   }));
+
+  // Additional middleware to ensure CORS headers are set for all requests
+  app.use((req, res, next) => {
+    // Set CORS headers for all requests
+    const origin = req.headers.origin;
+    if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    next();
+  });
 
   // Rate limiting
   const limiter = rateLimit({
@@ -115,16 +143,15 @@ export function createApp() {
   app.use('/api/pharmacy', pharmacyRoutes);
   app.use('/api/patients', patientRoutes);
 
-  // Protected routes (commented out temporarily due to compilation issues)
-  // app.use('/api/doctors', authenticate, doctorRoutes);
-  // app.use('/api/appointments', authenticate, appointmentRoutes);
-  // app.use('/api/laboratory', authenticate, labRoutes);
-  // app.use('/api/staff', authenticate, staffRoutes);
-  // app.use('/api/billing', authenticate, billingRoutes);
-  // app.use('/api/facility', authenticate, facilityRoutes);
-  // app.use('/api/reports', authenticate, reportsRoutes);
-  // app.use('/api/notifications', authenticate, notificationRoutes);
-  // app.use('/api/audit', authenticate, auditRoutes);
+  // Protected routes
+  app.use('/api/doctors', authenticate, doctorRoutes);
+  app.use('/api/appointments', authenticate, appointmentRoutes);
+  app.use('/api/laboratory', authenticate, labRoutes);
+  app.use('/api/staff', authenticate, staffRoutes);
+  app.use('/api/billing', authenticate, billingRoutes);
+  app.use('/api/facility', authenticate, facilityRoutes);
+  app.use('/api/reports', authenticate, reportsRoutes);
+  app.use('/api/notifications', authenticate, notificationRoutes);
 
   // Error handling middleware (must be last)
   app.use(errorHandler);

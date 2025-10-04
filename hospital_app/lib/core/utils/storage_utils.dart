@@ -9,6 +9,7 @@ class StorageUtils {
   static const String _themeKey = 'theme_mode';
   static const String _languageKey = 'language_code';
   static const String _notificationsKey = 'notifications_enabled';
+  static const String _rememberMeKey = 'remember_me';
 
   // Token management
   Future<String?> getToken() async {
@@ -103,14 +104,30 @@ class StorageUtils {
     await prefs.setBool(_notificationsKey, enabled);
   }
 
+  // Remember Me management
+  Future<bool> getRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_rememberMeKey) ?? false;
+  }
+
+  Future<void> setRememberMe(bool remember) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeKey, remember);
+  }
+
   // Clear all data (for logout)
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
+    final rememberMe = await getRememberMe();
     await Future.wait([
       prefs.remove(_tokenKey),
       prefs.remove(_refreshTokenKey),
       prefs.remove(_userKey),
     ]);
+    // Keep rememberMe preference if set
+    if (!rememberMe) {
+      await prefs.remove(_rememberMeKey);
+    }
   }
 
   // Clear all app data (for reset)

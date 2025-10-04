@@ -4,6 +4,8 @@ class ApiConfig {
   // Auth endpoints
   static const String loginEndpoint = '/auth/login';
   static const String logoutEndpoint = '/auth/logout';
+  static const String registerEndpoint = '/auth/register';
+  static const String deleteAccountEndpoint = '/auth/account';
   static const String refreshTokenEndpoint = '/auth/refresh';
   static const String changePasswordEndpoint = '/auth/change-password';
   static const String currentUserEndpoint = '/auth/me';

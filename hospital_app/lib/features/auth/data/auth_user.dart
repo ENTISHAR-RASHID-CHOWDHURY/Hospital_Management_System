@@ -1,47 +1,39 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
-
-enum UserRole {
-  patient,
-  doctor,
-  nurse,
-  receptionist,
-  pharmacist,
-  laboratory,
-  admin,
-}
+import '../../../core/models/auth_models.dart';
 
 extension UserRoleExt on UserRole {
   String get displayName {
     switch (this) {
-      case UserRole.patient:
+      case UserRole.PATIENT:
         return 'Patient';
-      case UserRole.doctor:
+      case UserRole.DOCTOR:
         return 'Doctor';
-      case UserRole.nurse:
+      case UserRole.NURSE:
         return 'Nurse / Medical Staff';
-      case UserRole.receptionist:
+      case UserRole.RECEPTIONIST:
         return 'Reception / Front Desk';
-      case UserRole.pharmacist:
+      case UserRole.PHARMACIST:
         return 'Pharmacist';
-      case UserRole.laboratory:
+      case UserRole.LABORATORY:
         return 'Laboratory Staff';
-      case UserRole.admin:
+      case UserRole.ADMIN:
         return 'Admin / Management';
     }
   }
 
-  String get code => name;
+  String get code => name.toLowerCase();
 }
 
 class UserRoleUtils {
   const UserRoleUtils._();
 
   static UserRole fromCode(String code) {
+    final upperCode = code.toUpperCase();
     return UserRole.values.firstWhere(
-      (role) => role.code == code,
-      orElse: () => UserRole.patient,
+      (role) => role.name == upperCode,
+      orElse: () => UserRole.PATIENT,
     );
   }
 }

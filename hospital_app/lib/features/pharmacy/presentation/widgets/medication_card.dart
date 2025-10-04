@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../data/medication.dart';
+import '../../data/models/medication_model.dart';
 
-class MedicationCard extends StatefulWidget {
+class MedicationCard extends ConsumerStatefulWidget {
   const MedicationCard({
     super.key,
     required this.medication,
@@ -14,10 +15,10 @@ class MedicationCard extends StatefulWidget {
   final VoidCallback? onTap;
 
   @override
-  State<MedicationCard> createState() => _MedicationCardState();
+  ConsumerState<MedicationCard> createState() => _MedicationCardState();
 }
 
-class _MedicationCardState extends State<MedicationCard>
+class _MedicationCardState extends ConsumerState<MedicationCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _hoverController;
   late Animation<double> _scaleAnimation;
@@ -46,23 +47,29 @@ class _MedicationCardState extends State<MedicationCard>
   }
 
   Color _getStatusColor() {
-    if (widget.medication.isExpired) return AppColors.error;
-    if (widget.medication.isOutOfStock) return AppColors.error;
-    if (widget.medication.isLowStock) return AppColors.warning;
-    switch (widget.medication.status) {
-      case MedicationStatus.inStock:
-        return AppColors.success;
-      case MedicationStatus.lowStock:
-        return AppColors.warning;
-      case MedicationStatus.outOfStock:
-        return AppColors.error;
-      case MedicationStatus.expired:
-        return AppColors.error;
-      case MedicationStatus.recalled:
-        return AppColors.error;
-      case MedicationStatus.restricted:
-        return AppColors.accentOrange;
+    if (widget.medication.expiryDate.isBefore(DateTime.now())) {
+      return AppColors.error; // Expired
     }
+    if (widget.medication.currentStock == 0) {
+      return AppColors.error; // Out of stock
+    }
+    if (widget.medication.currentStock <= widget.medication.minStockLevel) {
+      return AppColors.warning; // Low stock
+    }
+    return AppColors.success; // In stock
+  }
+
+  String _getStatusText() {
+    if (widget.medication.expiryDate.isBefore(DateTime.now())) {
+      return 'Expired';
+    }
+    if (widget.medication.currentStock == 0) {
+      return 'Out of Stock';
+    }
+    if (widget.medication.currentStock <= widget.medication.minStockLevel) {
+      return 'Low Stock';
+    }
+    return 'In Stock';
   }
 
   @override
@@ -123,7 +130,7 @@ class _MedicationCardState extends State<MedicationCard>
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
+                                gradient: const LinearGradient(
                                   colors: [
                                     AppColors.primaryBlue,
                                     AppColors.accentTeal
@@ -137,9 +144,10 @@ class _MedicationCardState extends State<MedicationCard>
                                   width: 1,
                                 ),
                               ),
-                              child: Text(
-                                widget.medication.category.icon,
-                                style: const TextStyle(fontSize: 24),
+                              child: Icon(
+                                _getCategoryIcon(widget.medication.category),
+                                color: Colors.white,
+                                size: 24,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -162,18 +170,24 @@ class _MedicationCardState extends State<MedicationCard>
                                       _buildStatusChip(),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.medication.genericName,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 14,
-                                      fontStyle: FontStyle.italic,
+                                  if (widget
+                                          .medication.description?.isNotEmpty ==
+                                      true) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.medication.description!,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
+                                  ],
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${widget.medication.dosage} • ${widget.medication.manufacturer}',
+                                    '${widget.medication.category} • ${widget.medication.manufacturer}',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.6),
                                       fontSize: 12,
@@ -203,74 +217,31 @@ class _MedicationCardState extends State<MedicationCard>
                             const Spacer(),
                             _buildInfoItem(
                               icon: Icons.calendar_today,
-                              label: _getExpiryText(),
-                              color: _getExpiryColor(),
+                              label:
+                                  _getExpiryText(widget.medication.expiryDate),
+                              color:
+                                  _getExpiryColor(widget.medication.expiryDate),
                             ),
                           ],
                         ),
-                        if (widget.medication.location != null) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                color: AppColors.accentTeal,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Location: ${widget.medication.location}',
-                                style: TextStyle(
-                                  color: AppColors.accentTeal,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                'Batch: ${widget.medication.batchNumber}',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (widget.medication.prescriptionRequired) ...[
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.qr_code,
+                              color: AppColors.accentTeal,
+                              size: 16,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentOrange.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.accentOrange.withOpacity(0.5),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Batch: ${widget.medication.batchNumber}',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 12,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.warning,
-                                  color: AppColors.accentOrange,
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Prescription Required',
-                                  style: TextStyle(
-                                    color: AppColors.accentOrange,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -295,7 +266,7 @@ class _MedicationCardState extends State<MedicationCard>
         ),
       ),
       child: Text(
-        widget.medication.status.displayName,
+        _getStatusText(),
         style: TextStyle(
           color: statusColor,
           fontSize: 10,
@@ -332,23 +303,44 @@ class _MedicationCardState extends State<MedicationCard>
   }
 
   Color _getStockColor() {
-    if (widget.medication.isOutOfStock) return AppColors.error;
-    if (widget.medication.isLowStock) return AppColors.warning;
+    if (widget.medication.currentStock == 0) return AppColors.error;
+    if (widget.medication.currentStock <= widget.medication.minStockLevel)
+      return AppColors.warning;
     return AppColors.success;
   }
 
-  Color _getExpiryColor() {
-    if (widget.medication.isExpired) return AppColors.error;
-    if (widget.medication.daysUntilExpiry <= 30) return AppColors.warning;
+  Color _getExpiryColor(DateTime expiryDate) {
+    if (expiryDate.isBefore(DateTime.now())) return AppColors.error;
+    final daysUntilExpiry = expiryDate.difference(DateTime.now()).inDays;
+    if (daysUntilExpiry <= 30) return AppColors.warning;
     return Colors.white.withOpacity(0.7);
   }
 
-  String _getExpiryText() {
-    if (widget.medication.isExpired) return 'Expired';
-    final days = widget.medication.daysUntilExpiry;
+  String _getExpiryText(DateTime expiryDate) {
+    if (expiryDate.isBefore(DateTime.now())) return 'Expired';
+    final days = expiryDate.difference(DateTime.now()).inDays;
     if (days <= 7) return '$days days';
     if (days <= 30) return '${(days / 7).ceil()} weeks';
     if (days <= 365) return '${(days / 30).ceil()} months';
     return '${(days / 365).ceil()} years';
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'antibiotics':
+        return Icons.biotech;
+      case 'pain relief':
+        return Icons.healing;
+      case 'cardiovascular':
+        return Icons.favorite;
+      case 'diabetes':
+        return Icons.water_drop;
+      case 'respiratory':
+        return Icons.air;
+      case 'psychiatric':
+        return Icons.psychology;
+      default:
+        return Icons.medication;
+    }
   }
 }

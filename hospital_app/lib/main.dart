@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'features/core/providers/auth_provider.dart';
-import 'features/core/theme/app_theme.dart';
-import 'features/auth/screens/login_screen.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
+import 'core/providers/auth_provider.dart';
+import 'core/providers/theme_provider.dart';
+import 'core/theme/hospital_theme.dart'; // Updated import
+import 'features/account/screens/streamlined_login_screen.dart';
+import 'features/dashboard/screens/role_based_dashboard.dart';
 import 'core/routing/app_routes.dart';
 
 Future<void> main() async {
@@ -22,16 +23,30 @@ class HospitalApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final themeModeState = ref.watch(themeModeProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Hospital Management System',
-      theme: AppTheme.lightTheme,
-      themeMode: ThemeMode.light,
+      theme: HospitalTheme.lightTheme, // Use unified theme
+      darkTheme: HospitalTheme.darkTheme, // Use unified theme
+      themeMode: themeModeState.themeMode,
       home: _buildHome(authState),
       routes: {
-        AppRoutes.login: (context) => const LoginScreen(),
-        AppRoutes.dashboard: (context) => const DashboardScreen(),
+        AppRoutes.login: (context) => const StreamlinedLoginScreen(),
+        AppRoutes.dashboard: (context) => const RoleBasedDashboard(),
+      },
+      onGenerateRoute: (settings) {
+        // Handle routes that need parameters
+        if (settings.name == AppRoutes.developerDashboard) {
+          // For developer dashboard, we'll navigate without parameters for now
+          // In production, pass actual token and developer info
+          return MaterialPageRoute(
+            builder: (context) =>
+                const RoleBasedDashboard(isDeveloperMode: true),
+          );
+        }
+        return null;
       },
     );
   }
@@ -46,9 +61,9 @@ class HospitalApp extends ConsumerWidget {
     }
 
     if (authState.isAuthenticated) {
-      return const DashboardScreen();
+      return const RoleBasedDashboard();
     } else {
-      return const LoginScreen();
+      return const StreamlinedLoginScreen();
     }
   }
 }
@@ -58,9 +73,9 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
-      body: const Center(
+    return const Scaffold(
+      backgroundColor: Color(0xFF3B82F6), // Primary blue
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

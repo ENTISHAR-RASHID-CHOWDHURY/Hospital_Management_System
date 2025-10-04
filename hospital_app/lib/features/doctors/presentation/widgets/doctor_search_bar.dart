@@ -143,7 +143,7 @@ class _DoctorSearchBarState extends State<DoctorSearchBar>
                                 color: AppColors.accentTeal.withOpacity(0.3),
                               ),
                             ),
-                            child: Row(
+                            child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
@@ -151,7 +151,7 @@ class _DoctorSearchBarState extends State<DoctorSearchBar>
                                   color: AppColors.accentTeal,
                                   size: 12,
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Text(
                                   'Doctors',
                                   style: TextStyle(
