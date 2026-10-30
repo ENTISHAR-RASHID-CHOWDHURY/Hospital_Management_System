@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import '../models/auth_models.dart';
 import '../dev/demo_names.dart';
+import 'package:hospital_app/core/config/app_config.dart';
 
 class HospitalApiService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static String get baseUrl => AppConfig.apiUrl;
   final Dio _dio;
 
   HospitalApiService() : _dio = Dio(BaseOptions(baseUrl: baseUrl));

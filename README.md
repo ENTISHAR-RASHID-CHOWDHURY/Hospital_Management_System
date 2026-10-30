@@ -26,7 +26,7 @@ npx prisma migrate dev
 npm run dev
 ```
 
-Backend will run on: http://localhost:3000
+Backend will run on: http://localhost:3001
 
 ### 2. Start Frontend Application
 ```powershell
