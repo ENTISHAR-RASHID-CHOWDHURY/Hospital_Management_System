@@ -3,12 +3,14 @@ import type { Server } from 'http';
 import type { NextFunction, Request, Response } from 'express';
 
 // Every `new PrismaClient()` in the app gets this same fake, so no database is needed.
-const fakeDb = {
+const fakeDb: Record<string, any> = {
+  // Runs the callback against the same fake, like a real transaction would.
+  $transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(fakeDb)),
   $queryRaw: jest.fn(),
   $disconnect: jest.fn(),
   user: { findUnique: jest.fn(), create: jest.fn() },
   role: { findUnique: jest.fn() },
-  patient: { findUnique: jest.fn() },
+  patient: { findUnique: jest.fn(), count: jest.fn(), create: jest.fn() },
   appointment: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
   bill: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
   labOrder: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
@@ -306,6 +308,110 @@ describe('with the app running', () => {
         headers: { 'x-developer-phrase': 'anything' },
       });
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('patient records', () => {
+    const profile = {
+      dateOfBirth: '1990-04-02',
+      gender: 'FEMALE',
+      phone: '5551234567',
+      address: { street: '1 Main St', city: 'Springfield', state: 'IL', zip: '62701' },
+      emergencyContact: { name: 'Sam Doe', relationship: 'Sibling', phone: '5559876543' },
+    };
+    const account = { id: 7, email: 'pat@example.com', firstName: 'Pat', lastName: 'Doe' };
+
+    const register = (body: Record<string, unknown>) =>
+      fetch(`${baseUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: account.email, password: 'password123', firstName: 'Pat', lastName: 'Doe', ...body }),
+      });
+
+    beforeEach(() => {
+      fakeDb.user.findUnique.mockResolvedValue(null);
+      fakeDb.role.findUnique.mockResolvedValue({ id: 10, name: 'PATIENT' });
+      fakeDb.user.create.mockImplementation(async ({ data }: any) => ({ id: 7, ...data, role: { id: 10, name: 'PATIENT' } }));
+      fakeDb.userSession.create.mockResolvedValue({});
+      fakeDb.permission.findMany.mockResolvedValue([]);
+      fakeDb.patient.count.mockResolvedValue(41);
+      fakeDb.patient.create.mockImplementation(async ({ data }: any) => ({ id: 'p1', ...data }));
+    });
+
+    it('sign-up without a profile creates only the account', async () => {
+      const res = await register({});
+
+      expect(res.status).toBe(201);
+      expect(fakeDb.patient.create).not.toHaveBeenCalled();
+      expect((await res.json()).patient).toBeNull();
+    });
+
+    it('sign-up with a profile also creates the linked patient record', async () => {
+      const res = await register({ patientProfile: profile });
+
+      expect(res.status).toBe(201);
+      const { data } = fakeDb.patient.create.mock.calls[0][0];
+      expect(data).toMatchObject({
+        userId: 7,
+        email: account.email,
+        firstName: 'Pat',
+        lastName: 'Doe',
+        gender: 'FEMALE',
+        patientNumber: `PAT${new Date().getFullYear()}000042`,
+      });
+      expect(fakeDb.$transaction).toHaveBeenCalled();
+      expect((await res.json()).patient).toMatchObject({ id: 'p1', userId: 7 });
+    });
+
+    it('an invalid profile is rejected before any account is created', async () => {
+      const res = await register({ patientProfile: { ...profile, gender: 'UNKNOWN' } });
+
+      expect(res.status).toBe(400);
+      expect(fakeDb.user.create).not.toHaveBeenCalled();
+    });
+
+    const patientHeaders = () => ({ Authorization: `Bearer ${accessTokenFor('PATIENT')}` });
+
+    it('GET /api/patients/me returns 404 until a record exists', async () => {
+      fakeDb.patient.findUnique.mockResolvedValue(null);
+      expect((await get('/api/patients/me', patientHeaders())).status).toBe(404);
+
+      fakeDb.patient.findUnique.mockResolvedValue({ id: 'p1', userId: 7 });
+      const res = await get('/api/patients/me', patientHeaders());
+      expect(res.status).toBe(200);
+      expect(fakeDb.patient.findUnique).toHaveBeenLastCalledWith({ where: { userId: 7 } });
+    });
+
+    it('POST /api/patients/me creates a record linked to the account', async () => {
+      fakeDb.patient.findUnique.mockResolvedValue(null);
+      fakeDb.user.findUnique.mockResolvedValue(account);
+
+      const res = await fetch(`${baseUrl}/api/patients/me`, {
+        method: 'POST',
+        headers: { ...patientHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+
+      expect(res.status).toBe(201);
+      expect(fakeDb.patient.create.mock.calls[0][0].data).toMatchObject({ userId: 7, email: account.email });
+    });
+
+    it('POST /api/patients/me refuses a second record', async () => {
+      fakeDb.patient.findUnique.mockResolvedValue({ id: 'p1', userId: 7 });
+
+      const res = await fetch(`${baseUrl}/api/patients/me`, {
+        method: 'POST',
+        headers: { ...patientHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+
+      expect(res.status).toBe(409);
+      expect(fakeDb.patient.create).not.toHaveBeenCalled();
+    });
+
+    it('/api/patients/me is for patients only', async () => {
+      const res = await get('/api/patients/me', { Authorization: `Bearer ${accessTokenFor('DOCTOR')}` });
+      expect(res.status).toBe(403);
     });
   });
 
