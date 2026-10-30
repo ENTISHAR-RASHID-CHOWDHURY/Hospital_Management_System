@@ -14,7 +14,7 @@ export interface JwtPayloadData {
 
 // Marks which kind of token this is, so a refresh token can't be used as an
 // access token (or the reverse), even when both share a signing secret.
-type TokenType = 'access' | 'refresh';
+type TokenType = 'access' | 'refresh' | 'developer';
 type SignedPayload = JwtPayloadData & { tokenType: TokenType };
 
 type ExpiresIn = Exclude<SignOptions['expiresIn'], undefined>;
@@ -43,6 +43,24 @@ export function verifyAccessToken(token: string): JwtPayloadData {
 
 export function verifyRefreshToken(token: string): JwtPayloadData {
   return verifyTyped(token, env.refreshSecret, 'refresh');
+}
+
+// Developer-tools login. Its own token type, so it can never be used as an
+// access token for the hospital API.
+export interface DeveloperTokenPayload {
+  developerId: number;
+}
+
+export function signDeveloperToken(developerId: number): string {
+  return jwt.sign({ developerId, tokenType: 'developer' }, env.jwtSecret as Secret, { expiresIn: '8h' });
+}
+
+export function verifyDeveloperToken(token: string): DeveloperTokenPayload {
+  const decoded = jwt.verify(token, env.jwtSecret as Secret, { algorithms: ['HS256'] });
+  if (typeof decoded === 'string' || (decoded as { tokenType?: string }).tokenType !== 'developer') {
+    throw new jwt.JsonWebTokenError('Expected a developer token');
+  }
+  return { developerId: (decoded as { developerId: number }).developerId };
 }
 
 function verifyTyped(token: string, secret: string, expected: TokenType): JwtPayloadData {

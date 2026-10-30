@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
 import '../../../core/constants/app_colors.dart';
+import '../services/developer_api_service.dart';
 import 'developer_login_screen.dart';
 
 class DeveloperAuthPhraseScreen extends StatefulWidget {
@@ -17,7 +18,6 @@ class _DeveloperAuthPhraseScreenState extends State<DeveloperAuthPhraseScreen> {
   String? _errorMessage;
 
   // The special authentication phrase (same as backend)
-  static const String _validPhrase = 'dev@hospital2025';
 
   void _verifyPhrase() {
     setState(() {
@@ -25,8 +25,19 @@ class _DeveloperAuthPhraseScreenState extends State<DeveloperAuthPhraseScreen> {
       _errorMessage = null;
     });
 
-    // Simple phrase verification
-    if (_phraseController.text.trim() == _validPhrase) {
+    // Quick local check against the phrase this build was given; the backend
+    // checks it again on every request.
+    const validPhrase = DeveloperApiService.authPhrase;
+    if (validPhrase.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage =
+            'Developer tools are not enabled in this build (missing DEVELOPER_PHRASE)';
+      });
+      return;
+    }
+
+    if (_phraseController.text.trim() == validPhrase) {
       // Navigate to developer login screen
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
