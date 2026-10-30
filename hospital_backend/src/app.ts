@@ -31,69 +31,35 @@ export function createApp() {
   const app = express();
   const prisma = new PrismaClient();
 
-  app.set('trust proxy', true);
+  // Only trust X-Forwarded-For when running behind a known number of proxies;
+  // trusting it blindly lets clients fake their IP and bypass rate limiting.
+  app.set('trust proxy', parseInt(process.env.TRUST_PROXY_HOPS ?? '0', 10));
 
   // Security middleware
   app.use(helmet());
 
-  // CORS configuration - Allow all localhost and 127.0.0.1 ports for development
-  // Specially configured for Flutter dynamic ports (e.g., localhost:61228, localhost:3000, etc.)
+  // CORS: in production only FRONTEND_URL (comma-separated) is allowed.
+  // Outside production, any localhost/127.0.0.1 port is also allowed so the
+  // Flutter dev server's random ports work.
+  const configuredOrigins = (process.env.FRONTEND_URL ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const localOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
   app.use(cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
+      // Requests without an Origin header (mobile apps, curl) aren't subject to CORS.
       if (!origin) return callback(null, true);
-      
-      // Allow any localhost or 127.0.0.1 origin in development
-      // This handles Flutter's dynamic port allocation (e.g., localhost:61228, localhost:3000, etc.)
-      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
-        if (origin.startsWith('http://localhost:') || 
-            origin.startsWith('http://127.0.0.1:') ||
-            origin.startsWith('https://localhost:') ||
-            origin.startsWith('https://127.0.0.1:')) {
-          console.log(`✅ CORS: Allowing development origin: ${origin}`);
-          return callback(null, true);
-        }
-      }
-      
-      // Allow specific origins in production
-      const allowedOrigins = [
-        'http://localhost:8080',
-        'http://127.0.0.1:8080',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        process.env.FRONTEND_URL
-      ].filter(Boolean);
-      
-      if (allowedOrigins.includes(origin)) {
-        console.log(`✅ CORS: Allowing configured origin: ${origin}`);
-        return callback(null, true);
-      }
-      
-      console.log(`❌ CORS: Rejecting origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      if (configuredOrigins.includes(origin)) return callback(null, true);
+      if (!isProduction && localOriginPattern.test(origin)) return callback(null, true);
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
   }));
-
-  // Additional middleware to ensure CORS headers are set for all requests
-  app.use((req, res, next) => {
-    // Set CORS headers for all requests
-    const origin = req.headers.origin;
-    if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
-      res.header('Access-Control-Allow-Origin', origin);
-    }
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-    next();
-  });
 
   // Rate limiting
   const limiter = rateLimit({

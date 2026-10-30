@@ -15,7 +15,9 @@ Express + Prisma backend powering the AegisCare mobile app.
    cd c:\Users\User\calculator\hospital_backend
    cmd /c npm install
    ```
-2. Copy `.env.example` to `.env` and adjust secrets if needed.
+2. Copy `.env.example` to `.env` and set `JWT_SECRET` to a long random value.
+   The server refuses to start without it (placeholders like `change-me` are rejected).
+   In production also set `FRONTEND_URL` (allowed browser origins) and, behind a proxy, `TRUST_PROXY_HOPS`.
 3. (Recommended) Start Postgres via Docker:
    ```powershell
    cd c:\Users\User\calculator\hospital_backend

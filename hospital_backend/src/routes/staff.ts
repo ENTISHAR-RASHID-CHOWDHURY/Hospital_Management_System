@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles } from '../middleware/auth.middleware';
+import { STAFF_ROLES } from '../constants/roles';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -27,7 +28,7 @@ const createStaffSchema = z.object({
 const updateStaffSchema = createStaffSchema.partial();
 
 // GET /api/staff - Get all staff with filters
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const {
       departmentId,
@@ -114,7 +115,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/staff/:id - Get staff member by ID
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -170,7 +171,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/staff - Create new staff member
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const validatedData = createStaffSchema.parse(req.body);
     
@@ -243,7 +244,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // PUT /api/staff/:id - Update staff member
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateStaffSchema.parse(req.body);
@@ -322,7 +323,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/staff/:id/status - Update staff active status
-router.patch('/:id/status', authenticate, async (req, res) => {
+router.patch('/:id/status', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -353,7 +354,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 });
 
 // GET /api/staff/departments - Get all departments
-router.get('/departments/list', authenticate, async (req, res) => {
+router.get('/departments/list', authenticate, requireRoles(...STAFF_ROLES), async (req, res) => {
   try {
     const departments = await prisma.department.findMany({
       where: { isActive: true },
@@ -376,7 +377,7 @@ router.get('/departments/list', authenticate, async (req, res) => {
 });
 
 // POST /api/staff/departments - Create new department
-router.post('/departments', authenticate, async (req, res) => {
+router.post('/departments', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { name, description, location, headId } = req.body;
 
@@ -421,7 +422,7 @@ router.post('/departments', authenticate, async (req, res) => {
 });
 
 // PUT /api/staff/departments/:id - Update department
-router.put('/departments/:id', authenticate, async (req, res) => {
+router.put('/departments/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, location, headId, isActive } = req.body;
@@ -466,7 +467,7 @@ router.put('/departments/:id', authenticate, async (req, res) => {
 });
 
 // GET /api/staff/by-department/:departmentId - Get staff by department
-router.get('/by-department/:departmentId', authenticate, async (req, res) => {
+router.get('/by-department/:departmentId', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { departmentId } = req.params;
     const { shiftType, isActive } = req.query;
@@ -507,7 +508,7 @@ router.get('/by-department/:departmentId', authenticate, async (req, res) => {
 });
 
 // GET /api/staff/stats - Get staff statistics
-router.get('/department-stats/overview', authenticate, async (req, res) => {
+router.get('/department-stats/overview', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -571,7 +572,7 @@ router.get('/department-stats/overview', authenticate, async (req, res) => {
 });
 
 // GET /api/staff/search - Advanced search for staff
-router.get('/advanced-search/query', authenticate, async (req, res) => {
+router.get('/advanced-search/query', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const {
       skills,
@@ -649,7 +650,7 @@ router.get('/advanced-search/query', authenticate, async (req, res) => {
 });
 
 // DELETE /api/staff/:id - Deactivate staff member
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;

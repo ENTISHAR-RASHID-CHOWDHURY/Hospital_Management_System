@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -29,7 +29,7 @@ const dischargeSchema = z.object({
 });
 
 // GET /api/facility/beds - Get beds with filters
-router.get('/beds', authenticate, async (req, res) => {
+router.get('/beds', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const {
       departmentId,
@@ -115,7 +115,7 @@ router.get('/beds', authenticate, async (req, res) => {
 });
 
 // GET /api/facility/beds/:id - Get bed by ID
-router.get('/beds/:id', authenticate, async (req, res) => {
+router.get('/beds/:id', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -163,7 +163,7 @@ router.get('/beds/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/facility/beds - Create new bed
-router.post('/beds', authenticate, async (req, res) => {
+router.post('/beds', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER'), async (req, res) => {
   try {
     const validatedData = createBedSchema.parse(req.body);
     
@@ -209,7 +209,7 @@ router.post('/beds', authenticate, async (req, res) => {
 });
 
 // PUT /api/facility/beds/:id - Update bed
-router.put('/beds/:id', authenticate, async (req, res) => {
+router.put('/beds/:id', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateBedSchema.parse(req.body);
@@ -270,7 +270,7 @@ router.put('/beds/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/facility/beds/:id/status - Update bed status
-router.patch('/beds/:id/status', authenticate, async (req, res) => {
+router.patch('/beds/:id/status', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER', 'NURSE'), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -315,7 +315,7 @@ router.patch('/beds/:id/status', authenticate, async (req, res) => {
 });
 
 // GET /api/facility/admissions - Get admissions with filters
-router.get('/admissions', authenticate, async (req, res) => {
+router.get('/admissions', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const {
       patientId,
@@ -415,7 +415,7 @@ router.get('/admissions', authenticate, async (req, res) => {
 });
 
 // GET /api/facility/admissions/:id - Get admission by ID
-router.get('/admissions/:id', authenticate, async (req, res) => {
+router.get('/admissions/:id', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -468,7 +468,7 @@ router.get('/admissions/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/facility/admissions - Create new admission (admit patient)
-router.post('/admissions', authenticate, async (req, res) => {
+router.post('/admissions', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const validatedData = admissionSchema.parse(req.body);
     
@@ -554,7 +554,7 @@ router.post('/admissions', authenticate, async (req, res) => {
 });
 
 // POST /api/facility/admissions/:id/discharge - Discharge patient
-router.post('/admissions/:id/discharge', authenticate, async (req, res) => {
+router.post('/admissions/:id/discharge', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = dischargeSchema.parse(req.body);
@@ -623,7 +623,7 @@ router.post('/admissions/:id/discharge', authenticate, async (req, res) => {
 });
 
 // POST /api/facility/admissions/:id/transfer - Transfer patient to another bed
-router.post('/admissions/:id/transfer', authenticate, async (req, res) => {
+router.post('/admissions/:id/transfer', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE'), async (req, res) => {
   try {
     const { id } = req.params;
     const { newBedId, reason } = req.body;
@@ -700,7 +700,7 @@ router.post('/admissions/:id/transfer', authenticate, async (req, res) => {
 });
 
 // GET /api/facility/stats - Get facility statistics
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER'), async (req, res) => {
   try {
     const [
       totalBeds,
@@ -769,7 +769,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // DELETE /api/facility/beds/:id - Deactivate bed
-router.delete('/beds/:id', authenticate, async (req, res) => {
+router.delete('/beds/:id', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER'), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;

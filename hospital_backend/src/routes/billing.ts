@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles } from '../middleware/auth.middleware';
+import { FINANCE_ROLES } from '../constants/roles';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -39,7 +40,7 @@ const paymentSchema = z.object({
 });
 
 // GET /api/billing/bills - Get bills with filters
-router.get('/bills', authenticate, async (req, res) => {
+router.get('/bills', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST'), async (req, res) => {
   try {
     const {
       patientId,
@@ -144,7 +145,7 @@ router.get('/bills', authenticate, async (req, res) => {
 });
 
 // GET /api/billing/bills/:id - Get bill by ID
-router.get('/bills/:id', authenticate, async (req, res) => {
+router.get('/bills/:id', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -184,7 +185,7 @@ router.get('/bills/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/billing/bills - Create new bill
-router.post('/bills', authenticate, async (req, res) => {
+router.post('/bills', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'RECEPTIONIST'), async (req, res) => {
   try {
     const validatedData = createBillSchema.parse(req.body);
     
@@ -251,7 +252,7 @@ router.post('/bills', authenticate, async (req, res) => {
 });
 
 // PUT /api/billing/bills/:id - Update bill
-router.put('/bills/:id', authenticate, async (req, res) => {
+router.put('/bills/:id', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateBillSchema.parse(req.body);
@@ -312,7 +313,7 @@ router.put('/bills/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/billing/bills/:id/status - Update bill status
-router.patch('/bills/:id/status', authenticate, async (req, res) => {
+router.patch('/bills/:id/status', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER'), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -345,7 +346,7 @@ router.patch('/bills/:id/status', authenticate, async (req, res) => {
 });
 
 // POST /api/billing/bills/:id/payments - Add payment to bill
-router.post('/bills/:id/payments', authenticate, async (req, res) => {
+router.post('/bills/:id/payments', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = paymentSchema.parse(req.body);
@@ -413,7 +414,7 @@ router.post('/bills/:id/payments', authenticate, async (req, res) => {
 });
 
 // GET /api/billing/payments - Get payments with filters
-router.get('/payments', authenticate, async (req, res) => {
+router.get('/payments', authenticate, requireRoles(...FINANCE_ROLES), async (req, res) => {
   try {
     const {
       billId,
@@ -480,7 +481,7 @@ router.get('/payments', authenticate, async (req, res) => {
 });
 
 // POST /api/billing/bills/:id/items - Add item to bill
-router.post('/bills/:id/items', authenticate, async (req, res) => {
+router.post('/bills/:id/items', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
     const { description, itemType, referenceId, quantity = 1, unitPrice } = req.body;
@@ -532,7 +533,7 @@ router.post('/bills/:id/items', authenticate, async (req, res) => {
 });
 
 // GET /api/billing/stats - Get billing statistics
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requireRoles(...FINANCE_ROLES), async (req, res) => {
   try {
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
@@ -612,7 +613,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // GET /api/billing/reports/revenue - Get revenue report
-router.get('/reports/revenue', authenticate, async (req, res) => {
+router.get('/reports/revenue', authenticate, requireRoles(...FINANCE_ROLES), async (req, res) => {
   try {
     const { startDate, endDate, groupBy = 'day' } = req.query;
 
@@ -682,7 +683,7 @@ router.get('/reports/revenue', authenticate, async (req, res) => {
 });
 
 // DELETE /api/billing/bills/:id - Cancel bill
-router.delete('/bills/:id', authenticate, async (req, res) => {
+router.delete('/bills/:id', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER'), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
