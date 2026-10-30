@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../features/core/providers/auth_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../services/developer_api_service.dart';
 import '../services/developer_action_logger.dart';
 import '../../dashboard/screens/role_based_dashboard.dart';
@@ -209,21 +209,23 @@ class _DeveloperCharacterScreenState
         },
       );
 
-      // Use Riverpod authentication provider to role-play as the actual demo user
+      // Ask the backend for real tokens for this demo user, then sign in
+      // with them so API calls run as that user.
       final authNotifier = ref.read(authProvider.notifier);
-
-      // Use the actual demo user's email from the character data
-      final demoEmail = character['email'];
-
-      if (demoEmail == null || demoEmail.isEmpty) {
+      final role = character['role']?.toString();
+      if (role == null || role.isEmpty) {
         setState(() {
-          _errorMessage = 'Invalid character data - missing email';
+          _errorMessage = 'Invalid character data - missing role';
           _isLoading = false;
         });
         return;
       }
 
-      final success = await authNotifier.loginAsDeveloper(demoEmail);
+      final response = await widget.developerService.selectRole(
+        role,
+        character['id']?.toString(),
+      );
+      final success = await authNotifier.loginWithDemoSession(response);
 
       if (success) {
         setState(() {
@@ -242,7 +244,8 @@ class _DeveloperCharacterScreenState
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to login as demo user';
+          _errorMessage =
+              ref.read(authProvider).error ?? 'Failed to login as demo user';
           _isLoading = false;
         });
       }

@@ -204,22 +204,14 @@ class _ImprovedDeveloperCharacterScreenState
         },
       );
 
-      // Use Riverpod authentication provider to role-play as the demo user
+      // Ask the backend for real tokens for this demo user, then sign in
+      // with them so API calls run as that user.
       final authNotifier = ref.read(authProvider.notifier);
-      final demoEmail = character['email'];
-
-      if (demoEmail == null || demoEmail.isEmpty) {
-        setState(() {
-          _errorMessage = 'Invalid character data - missing email';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final success = await authNotifier.loginAsDeveloper(
-        demoEmail,
-        role: _selectedRole?.toUpperCase(),
+      final response = await widget.developerService.selectRole(
+        _selectedRole!,
+        character['id']?.toString(),
       );
+      final success = await authNotifier.loginWithDemoSession(response);
 
       if (success && mounted) {
         // Verify the auth state has the user before navigating
@@ -246,7 +238,8 @@ class _ImprovedDeveloperCharacterScreenState
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to authenticate as selected character';
+          _errorMessage = ref.read(authProvider).error ??
+              'Failed to authenticate as selected character';
           _isLoading = false;
         });
       }

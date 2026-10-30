@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
 import '../../../core/constants/app_colors.dart';
 import '../services/developer_api_service.dart';
 import '../../dashboard/screens/role_based_dashboard.dart';
 import '../../../core/dev/demo_names.dart';
 
-class DemoUserSelectionScreen extends StatefulWidget {
+class DemoUserSelectionScreen extends ConsumerStatefulWidget {
   final DeveloperApiService developerService;
   final String role;
   final String roleDisplayName;
@@ -20,11 +22,12 @@ class DemoUserSelectionScreen extends StatefulWidget {
   });
 
   @override
-  State<DemoUserSelectionScreen> createState() =>
+  ConsumerState<DemoUserSelectionScreen> createState() =>
       _DemoUserSelectionScreenState();
 }
 
-class _DemoUserSelectionScreenState extends State<DemoUserSelectionScreen> {
+class _DemoUserSelectionScreenState
+    extends ConsumerState<DemoUserSelectionScreen> {
   bool _isLoading = true;
   List<dynamic> _demoUsers = [];
   String? _errorMessage;
@@ -61,10 +64,13 @@ class _DemoUserSelectionScreenState extends State<DemoUserSelectionScreen> {
 
     final response = await widget.developerService.selectRole(
       widget.role,
-      demoUser['id'],
+      demoUser['id']?.toString(),
     );
+    // Sign in with the real tokens the backend returned for this demo user.
+    final success =
+        await ref.read(authProvider.notifier).loginWithDemoSession(response);
 
-    if (response['success'] == true) {
+    if (success) {
       if (!mounted) return;
 
       // Navigate to role-based dashboard
@@ -76,7 +82,7 @@ class _DemoUserSelectionScreenState extends State<DemoUserSelectionScreen> {
       );
     } else {
       setState(() {
-        _errorMessage = response['error'] ?? 'Failed to select role';
+        _errorMessage = ref.read(authProvider).error ?? 'Failed to select role';
         _isLoading = false;
       });
     }
