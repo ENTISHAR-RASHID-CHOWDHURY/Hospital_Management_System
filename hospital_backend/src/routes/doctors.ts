@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles } from '../middleware/auth.middleware';
+import { STAFF_ROLES } from '../constants/roles';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -108,7 +109,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/doctors/:id - Get doctor by ID
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requireRoles(...STAFF_ROLES), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -168,7 +169,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/doctors - Create new doctor
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const validatedData = createDoctorSchema.parse(req.body);
     
@@ -241,7 +242,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // PUT /api/doctors/:id - Update doctor
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateDoctorSchema.parse(req.body);
@@ -315,7 +316,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/doctors/:id/status - Update doctor availability status
-router.patch('/:id/status', authenticate, async (req, res) => {
+router.patch('/:id/status', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { isAvailable, currentStatus } = req.body;
@@ -352,7 +353,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 });
 
 // GET /api/doctors/:id/schedule - Get doctor's schedule
-router.get('/:id/schedule', authenticate, async (req, res) => {
+router.get('/:id/schedule', authenticate, requireRoles(...STAFF_ROLES), async (req, res) => {
   try {
     const { id } = req.params;
     const { date, startDate, endDate } = req.query;
@@ -414,7 +415,7 @@ router.get('/:id/schedule', authenticate, async (req, res) => {
 });
 
 // DELETE /api/doctors/:id - Soft delete doctor (deactivate)
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
 

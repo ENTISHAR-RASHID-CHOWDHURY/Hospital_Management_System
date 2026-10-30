@@ -37,10 +37,7 @@ const updateMedicationSchema = createMedicationSchema.partial();
 router.get(
   '/medications',
   authenticate,
-  (req, res, next) => {
-    // Simple role check without requireRoles for now
-    next();
-  },
+  requireRoles('SUPER_ADMIN', 'PHARMACIST', 'DOCTOR', 'NURSE'),
   async (req: Request, res: Response) => {
     try {
       const { 
@@ -77,6 +74,7 @@ router.get(
 router.get(
   '/inventory/report',
   authenticate,
+  requireRoles('SUPER_ADMIN', 'PHARMACIST'),
   async (req: Request, res: Response) => {
     try {
       res.json({

@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -122,7 +122,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/notifications - Create new notification (admin only)
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     // Check if user has permission to create notifications
     const currentUser = (req as any).user;
@@ -159,7 +159,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // POST /api/notifications/bulk - Create bulk notifications (admin only)
-router.post('/bulk', authenticate, async (req, res) => {
+router.post('/bulk', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     // Check if user has permission to create notifications
     const currentUser = (req as any).user;
@@ -265,7 +265,7 @@ router.patch('/mark-all-read', authenticate, async (req, res) => {
 });
 
 // POST /api/notifications/appointment-reminders - Send appointment reminders (system)
-router.post('/appointment-reminders', authenticate, async (req, res) => {
+router.post('/appointment-reminders', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     // Check if user has admin permissions
     const currentUser = (req as any).user;
@@ -359,7 +359,7 @@ router.post('/appointment-reminders', authenticate, async (req, res) => {
 });
 
 // POST /api/notifications/lab-results - Notify about lab results (system)
-router.post('/lab-results', authenticate, async (req, res) => {
+router.post('/lab-results', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     // Check if user has admin permissions
     const currentUser = (req as any).user;
@@ -430,7 +430,7 @@ router.post('/lab-results', authenticate, async (req, res) => {
 });
 
 // POST /api/notifications/bill-due - Send bill due notifications (system)
-router.post('/bill-due', authenticate, async (req, res) => {
+router.post('/bill-due', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT'), async (req, res) => {
   try {
     // Check if user has admin permissions
     const currentUser = (req as any).user;
@@ -507,7 +507,7 @@ router.post('/bill-due', authenticate, async (req, res) => {
 });
 
 // GET /api/notifications/stats - Get notification statistics (admin only)
-router.get('/admin/stats', authenticate, async (req, res) => {
+router.get('/admin/stats', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     // Check if user has admin permissions
     const currentUser = (req as any).user;
@@ -575,7 +575,7 @@ router.delete('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = (req as any).user.id;
-    const userRole = (req as any).user.role.name;
+    const userRole = (req as any).user.role;
 
     // Users can only delete their own notifications, admins can delete any
     const where: any = { id };

@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import * as jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { AuditLogger } from '../utils/audit-logger';
-import { JwtPayloadData } from '../utils/token';
+import { JwtPayloadData, verifyAccessToken } from '../utils/token';
 
 const prisma = new PrismaClient();
 const auditLogger = new AuditLogger();
@@ -33,7 +32,7 @@ export const authenticate = async (
       return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = verifyAccessToken(token);
     
     // Verify token is not blacklisted and session is active
     const session = await prisma.userSession.findFirst({

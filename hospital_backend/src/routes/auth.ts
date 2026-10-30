@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, JwtPayloadData } from '../utils/token';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { AuditLogger } from '../utils/audit-logger';
+import { SELF_REGISTER_ROLE } from '../constants/roles';
 
 // Type alias for authenticated route handlers  
 type AuthenticatedHandler = (req: AuthenticatedRequest, res: any, next?: any) => any;
@@ -28,8 +29,7 @@ const registerSchema = z.object({
   password: z.string().min(6),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z.string().optional(),
-  roleId: z.number().int().positive()
+  phone: z.string().optional()
 });
 
 const changePasswordSchema = z.object({
@@ -148,7 +148,9 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone, roleId } = registerSchema.parse(req.body);
+    // Any role/roleId in the body is ignored: public sign-up always creates a patient.
+    // Staff accounts are created by an admin through POST /api/users.
+    const { email, password, firstName, lastName, phone } = registerSchema.parse(req.body);
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -159,14 +161,15 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Verify role exists
     const role = await prisma.role.findUnique({
-      where: { id: roleId }
+      where: { name: SELF_REGISTER_ROLE }
     });
 
     if (!role) {
-      return res.status(400).json({ error: 'Invalid role' });
+      console.error(`Registration error: role ${SELF_REGISTER_ROLE} is missing from the database`);
+      return res.status(500).json({ error: 'Internal server error' });
     }
+    const roleId = role.id;
 
     // Hash password
     const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');

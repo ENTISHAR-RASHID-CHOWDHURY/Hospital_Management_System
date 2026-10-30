@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles, resolveOwnPatient } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -30,7 +30,7 @@ const labResultSchema = z.object({
 });
 
 // GET /api/laboratory/orders - Get lab orders with filters
-router.get('/orders', authenticate, async (req, res) => {
+router.get('/orders', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const {
       patientId,
@@ -50,6 +50,8 @@ router.get('/orders', authenticate, async (req, res) => {
     if (doctorId) where.doctorId = doctorId;
     if (status) where.status = status;
     if (urgency) where.urgency = urgency;
+    // Patients only ever see their own records, whatever patientId they ask for.
+    if (req.ownPatientId) where.patientId = req.ownPatientId;
     
     // Date filtering
     if (startDate && endDate) {
@@ -124,7 +126,7 @@ router.get('/orders', authenticate, async (req, res) => {
 });
 
 // GET /api/laboratory/orders/:id - Get lab order by ID
-router.get('/orders/:id', authenticate, async (req, res) => {
+router.get('/orders/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -152,7 +154,7 @@ router.get('/orders/:id', authenticate, async (req, res) => {
       }
     });
 
-    if (!order) {
+    if (!order || (req.ownPatientId && order.patientId !== req.ownPatientId)) {
       return res.status(404).json({ error: 'Lab order not found' });
     }
 
@@ -164,7 +166,7 @@ router.get('/orders/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/laboratory/orders - Create new lab order
-router.post('/orders', authenticate, async (req, res) => {
+router.post('/orders', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR'), async (req, res) => {
   try {
     const validatedData = createLabOrderSchema.parse(req.body);
     
@@ -221,7 +223,7 @@ router.post('/orders', authenticate, async (req, res) => {
 });
 
 // PUT /api/laboratory/orders/:id - Update lab order
-router.put('/orders/:id', authenticate, async (req, res) => {
+router.put('/orders/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateLabOrderSchema.parse(req.body);
@@ -267,7 +269,7 @@ router.put('/orders/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/laboratory/orders/:id/status - Update lab order status
-router.patch('/orders/:id/status', authenticate, async (req, res) => {
+router.patch('/orders/:id/status', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -300,7 +302,7 @@ router.patch('/orders/:id/status', authenticate, async (req, res) => {
 });
 
 // POST /api/laboratory/orders/:id/results - Add result to lab order
-router.post('/orders/:id/results', authenticate, async (req, res) => {
+router.post('/orders/:id/results', authenticate, requireRoles('SUPER_ADMIN', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = labResultSchema.parse(req.body);
@@ -353,7 +355,7 @@ router.post('/orders/:id/results', authenticate, async (req, res) => {
 });
 
 // PUT /api/laboratory/results/:id - Update lab result
-router.put('/results/:id', authenticate, async (req, res) => {
+router.put('/results/:id', authenticate, requireRoles('SUPER_ADMIN', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = labResultSchema.partial().parse(req.body);
@@ -391,7 +393,7 @@ router.put('/results/:id', authenticate, async (req, res) => {
 });
 
 // GET /api/laboratory/results - Get lab results with filters
-router.get('/results', authenticate, async (req, res) => {
+router.get('/results', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const {
       patientId,
@@ -408,6 +410,9 @@ router.get('/results', authenticate, async (req, res) => {
     if (patientId) {
       where.labOrder = { patientId };
     }
+
+    // Patients only ever see results from their own lab orders.
+    if (req.ownPatientId) where.labOrder = { patientId: req.ownPatientId };
     
     if (testName) where.testName = { contains: testName as string, mode: 'insensitive' };
     if (status) where.status = status;
@@ -465,7 +470,7 @@ router.get('/results', authenticate, async (req, res) => {
 });
 
 // GET /api/laboratory/results/:id - Get lab result by ID
-router.get('/results/:id', authenticate, async (req, res) => {
+router.get('/results/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -491,7 +496,7 @@ router.get('/results/:id', authenticate, async (req, res) => {
       }
     });
 
-    if (!result) {
+    if (!result || (req.ownPatientId && result.labOrder.patientId !== req.ownPatientId)) {
       return res.status(404).json({ error: 'Lab result not found' });
     }
 
@@ -503,7 +508,7 @@ router.get('/results/:id', authenticate, async (req, res) => {
 });
 
 // GET /api/laboratory/stats - Get laboratory statistics
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requireRoles('SUPER_ADMIN', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
@@ -578,7 +583,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // DELETE /api/laboratory/orders/:id - Cancel lab order
-router.delete('/orders/:id', authenticate, async (req, res) => {
+router.delete('/orders/:id', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;

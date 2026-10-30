@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles, resolveOwnPatient } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -27,7 +27,7 @@ const rescheduleSchema = z.object({
 });
 
 // GET /api/appointments - Get appointments with filters
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { 
       patientId,
@@ -48,6 +48,8 @@ router.get('/', authenticate, async (req, res) => {
     if (doctorId) where.doctorId = doctorId;
     if (status) where.status = status;
     if (type) where.type = type;
+    // Patients only ever see their own records, whatever patientId they ask for.
+    if (req.ownPatientId) where.patientId = req.ownPatientId;
     if (isUrgent !== undefined) where.isUrgent = isUrgent === 'true';
     
     // Date filtering
@@ -124,7 +126,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/appointments/:id - Get appointment by ID
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -173,7 +175,8 @@ router.get('/:id', authenticate, async (req, res) => {
       }
     });
 
-    if (!appointment) {
+    // A patient asking for someone else's appointment gets the same 404 as a missing one.
+    if (!appointment || (req.ownPatientId && appointment.patientId !== req.ownPatientId)) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
@@ -185,7 +188,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/appointments - Create new appointment
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'RECEPTIONIST'), async (req, res) => {
   try {
     const validatedData = createAppointmentSchema.parse(req.body);
     
@@ -295,7 +298,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // PUT /api/appointments/:id - Update appointment
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateAppointmentSchema.parse(req.body);
@@ -393,7 +396,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/appointments/:id/status - Update appointment status
-router.patch('/:id/status', authenticate, async (req, res) => {
+router.patch('/:id/status', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
     const { status, notes } = req.body;
@@ -439,7 +442,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 });
 
 // POST /api/appointments/:id/reschedule - Reschedule appointment
-router.post('/:id/reschedule', authenticate, async (req, res) => {
+router.post('/:id/reschedule', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
     const validatedData = rescheduleSchema.parse(req.body);
@@ -583,7 +586,7 @@ router.get('/available-slots/:doctorId', authenticate, async (req, res) => {
 });
 
 // DELETE /api/appointments/:id - Cancel appointment
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requireRoles('SUPER_ADMIN', 'RECEPTIONIST'), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;

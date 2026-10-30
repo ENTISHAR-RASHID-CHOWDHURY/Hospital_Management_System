@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireRoles } from '../middleware/auth.middleware';
+import { CLINICAL_ROLES, FINANCE_ROLES } from '../constants/roles';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -18,7 +19,7 @@ const reportQuerySchema = z.object({
 });
 
 // GET /api/reports/dashboard - Get dashboard overview data
-router.get('/dashboard', authenticate, async (req, res) => {
+router.get('/dashboard', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'BILLING_MANAGER', 'FACILITY_MANAGER', 'ACCOUNTANT'), async (req, res) => {
   try {
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
@@ -209,7 +210,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/patients - Get patient reports
-router.get('/patients', authenticate, async (req, res) => {
+router.get('/patients', authenticate, requireRoles(...CLINICAL_ROLES), async (req, res) => {
   try {
     const query = reportQuerySchema.parse(req.query);
     
@@ -290,7 +291,7 @@ router.get('/patients', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/appointments - Get appointment reports
-router.get('/appointments', authenticate, async (req, res) => {
+router.get('/appointments', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
   try {
     const query = reportQuerySchema.parse(req.query);
     
@@ -373,7 +374,7 @@ router.get('/appointments', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/revenue - Get revenue reports
-router.get('/revenue', authenticate, async (req, res) => {
+router.get('/revenue', authenticate, requireRoles(...FINANCE_ROLES), async (req, res) => {
   try {
     const query = reportQuerySchema.parse(req.query);
     
@@ -465,7 +466,7 @@ router.get('/revenue', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/laboratory - Get laboratory reports
-router.get('/laboratory', authenticate, async (req, res) => {
+router.get('/laboratory', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'LAB_TECHNICIAN'), async (req, res) => {
   try {
     const query = reportQuerySchema.parse(req.query);
     
@@ -540,7 +541,7 @@ router.get('/laboratory', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/occupancy - Get facility occupancy reports
-router.get('/occupancy', authenticate, async (req, res) => {
+router.get('/occupancy', authenticate, requireRoles('SUPER_ADMIN', 'FACILITY_MANAGER', 'DOCTOR', 'NURSE'), async (req, res) => {
   try {
     const query = reportQuerySchema.parse(req.query);
     
@@ -656,7 +657,7 @@ router.get('/occupancy', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/doctors - Get doctor performance reports
-router.get('/doctors', authenticate, async (req, res) => {
+router.get('/doctors', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const query = reportQuerySchema.parse(req.query);
     
@@ -770,7 +771,7 @@ router.get('/doctors', authenticate, async (req, res) => {
 });
 
 // GET /api/reports/export/:type - Export reports in different formats
-router.get('/export/:type', authenticate, async (req, res) => {
+router.get('/export/:type', authenticate, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { type } = req.params;
     const { format = 'json' } = req.query;
