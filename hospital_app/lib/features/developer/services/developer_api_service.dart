@@ -4,7 +4,9 @@ import 'package:hospital_app/core/config/app_config.dart';
 
 class DeveloperApiService {
   static String get baseUrl => '${AppConfig.apiUrl}/developer';
-  static const String authPhrase = 'dev@hospital2025';
+  // Must match the backend's DEVELOPER_PHRASE. Pass it at build time:
+  //   flutter run --dart-define=DEVELOPER_PHRASE=...
+  static const String authPhrase = String.fromEnvironment('DEVELOPER_PHRASE');
 
   String? _token;
 

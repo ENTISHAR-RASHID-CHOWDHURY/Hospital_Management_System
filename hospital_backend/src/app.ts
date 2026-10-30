@@ -19,6 +19,8 @@ import billingRoutes from './routes/billing';
 import facilityRoutes from './routes/facility';
 import reportsRoutes from './routes/reports';
 import notificationRoutes from './routes/notifications';
+import developerRoutes from './routes/developer';
+import { env } from './config/env';
 import { authenticate } from './middleware/auth.middleware';
 
 // Import middleware
@@ -118,6 +120,11 @@ export function createApp() {
   app.use('/api/facility', authenticate, facilityRoutes);
   app.use('/api/reports', authenticate, reportsRoutes);
   app.use('/api/notifications', authenticate, notificationRoutes);
+
+  // Developer tools: only exist when DEVELOPER_MODE=true (never in production).
+  if (env.developerMode) {
+    app.use('/api/developer', developerRoutes);
+  }
 
   // Error handling middleware (must be last)
   app.use(errorHandler);

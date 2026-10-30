@@ -273,7 +273,8 @@ async function main() {
     
     await prisma.user.upsert({
       where: { email: userData.email },
-      update: {},
+      // Demo accounts are the only ones the developer tools may impersonate.
+      update: { isDemo: true },
       create: {
         email: userData.email,
         passwordHash: hashedPassword,
@@ -282,6 +283,7 @@ async function main() {
         displayName: `${userData.firstName} ${userData.lastName}`,
         roleId: roleMap[userData.role],
         isActive: true,
+        isDemo: true,
       },
     });
     

@@ -44,6 +44,8 @@ model User {
   phone           String?
   avatar          String?
   isActive        Boolean            @default(true)
+  // Seeded demo account; the developer tools may only impersonate these
+  isDemo          Boolean            @default(false)
   lastLogin       DateTime?
   roleId          Int
   role            Role               @relation(fields: [roleId], references: [id])
@@ -59,6 +61,18 @@ model User {
   
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+// Accounts for the developer tools (/api/developer), which only exist when
+// DEVELOPER_MODE=true outside production. Separate from User so a developer
+// login never has a role in the hospital system.
+model DeveloperAccount {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 model UserSession {

@@ -300,6 +300,15 @@ describe('with the app running', () => {
     });
   });
 
+  describe('developer tools', () => {
+    it('do not exist unless DEVELOPER_MODE=true', async () => {
+      const res = await fetch(`${baseUrl}/api/developer/session`, {
+        headers: { 'x-developer-phrase': 'anything' },
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
   describe('CORS', () => {
     it('does not allow an unknown origin', async () => {
       const res = await get('/api/billing/bills', { Origin: 'https://evil.example' });

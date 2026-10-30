@@ -25,6 +25,16 @@ function requireSecret(key: string, value: string, nodeEnv: string): string {
 }
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
+
+// Developer tools (/api/developer) let a developer act as any seeded demo
+// user. They are off unless DEVELOPER_MODE=true, and never allowed in production.
+const developerMode = process.env.DEVELOPER_MODE === 'true';
+if (developerMode && nodeEnv === 'production') {
+  throw new Error('DEVELOPER_MODE must not be enabled in production');
+}
+const developerPhrase = developerMode
+  ? requireSecret('DEVELOPER_PHRASE', requireEnv('DEVELOPER_PHRASE'), nodeEnv)
+  : undefined;
 const jwtSecret = requireSecret('JWT_SECRET', requireEnv('JWT_SECRET'), nodeEnv);
 const refreshSecret = process.env.JWT_REFRESH_SECRET
   ? requireSecret('JWT_REFRESH_SECRET', process.env.JWT_REFRESH_SECRET, nodeEnv)
@@ -39,4 +49,6 @@ export const env = {
   refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   databaseUrl: requireEnv('DATABASE_URL'),
   frontendUrl: process.env.FRONTEND_URL,
+  developerMode,
+  developerPhrase,
 };
