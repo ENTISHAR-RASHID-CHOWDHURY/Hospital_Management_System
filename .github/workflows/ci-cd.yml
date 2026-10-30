@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '18'
-  FLUTTER_VERSION: '3.16.0'
+  FLUTTER_VERSION: '3.24.5' # Dart 3.5.4, matches the sdk constraint in hospital_app/pubspec.yaml
 
 jobs:
   # Backend Tests and Linting

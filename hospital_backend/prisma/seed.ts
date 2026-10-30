@@ -7,16 +7,17 @@ const prisma = new PrismaClient();
 
 type PrismaRole = Awaited<ReturnType<typeof prisma.role.findMany>>[number];
 
-type DashboardSeed = Record<HospitalRole, Array<{
+// Roles without an entry get no dashboard shortcuts.
+type DashboardSeed = Partial<Record<HospitalRole, Array<{
   title: string;
   description: string;
   icon: string;
   routeName: string;
   queryParams?: Record<string, unknown>;
-}>>;
+}>>>;
 
 const dashboardSeeds: DashboardSeed = {
-  admin: [
+  SUPER_ADMIN: [
     {
       title: 'Staff Management',
       description: 'Approve new staff accounts and manage roles',
@@ -30,7 +31,7 @@ const dashboardSeeds: DashboardSeed = {
       routeName: '/admin/finance',
     },
   ],
-  doctor: [
+  DOCTOR: [
     {
       title: 'Patient Appointments',
       description: 'View and manage your upcoming appointments',
@@ -44,7 +45,7 @@ const dashboardSeeds: DashboardSeed = {
       routeName: '/doctor/patients',
     },
   ],
-  nurse: [
+  NURSE: [
     {
       title: 'Ward Roster',
       description: 'Check your shift schedule and assigned wards',
@@ -58,7 +59,7 @@ const dashboardSeeds: DashboardSeed = {
       routeName: '/nurse/medication',
     },
   ],
-  receptionist: [
+  RECEPTIONIST: [
     {
       title: 'Check-In Queue',
       description: 'Manage today’s patient check-ins',
@@ -72,7 +73,7 @@ const dashboardSeeds: DashboardSeed = {
       routeName: '/reception/billing',
     },
   ],
-  pharmacist: [
+  PHARMACIST: [
     {
       title: 'Prescription Orders',
       description: 'Fulfil and track pending prescriptions',
@@ -86,7 +87,7 @@ const dashboardSeeds: DashboardSeed = {
       routeName: '/pharmacy/inventory',
     },
   ],
-  laboratory: [
+  LAB_TECHNICIAN: [
     {
       title: 'Lab Requests',
       description: 'Process incoming lab test requests',
@@ -100,7 +101,7 @@ const dashboardSeeds: DashboardSeed = {
       routeName: '/lab/results',
     },
   ],
-  patient: [
+  PATIENT: [
     {
       title: 'Upcoming Visits',
       description: 'Track your scheduled appointments',

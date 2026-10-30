@@ -48,7 +48,7 @@ const mockedSignRefreshToken = signRefreshToken as jest.MockedFunction<typeof si
 const mockedVerifyRefreshToken = verifyRefreshToken as jest.MockedFunction<typeof verifyRefreshToken>;
 
 describe('AuthService', () => {
-  const baseRoleName: HospitalRole = 'doctor';
+  const baseRoleName: HospitalRole = 'DOCTOR';
 
   const baseRole = {
     id: 1,

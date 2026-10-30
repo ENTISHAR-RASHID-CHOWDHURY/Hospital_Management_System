@@ -84,7 +84,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Key Metrics Cards
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -95,7 +95,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   trend: '+12%',
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: StatCard(
                   label: 'Appointments',
@@ -108,7 +108,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -119,7 +119,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   trend: '+15% from last month',
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: StatCard(
                   label: 'Occupancy',
@@ -152,7 +152,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   height: 200,
                   child: LineChart(
                     LineChartData(
-                      gridData: FlGridData(show: false),
+                      gridData: const FlGridData(show: false),
                       titlesData: FlTitlesData(
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
@@ -185,9 +185,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                             },
                           ),
                         ),
-                        rightTitles: AxisTitles(
+                        rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
-                        topTitles: AxisTitles(
+                        topTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
                       ),
                       borderData: FlBorderData(show: false),
@@ -205,7 +205,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                           isCurved: true,
                           color: AppColors.primary,
                           barWidth: 3,
-                          dotData: FlDotData(show: true),
+                          dotData: const FlDotData(show: true),
                           belowBarData: BarAreaData(
                             show: true,
                             color: AppColors.primary.withOpacity(0.3),
@@ -345,7 +345,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   height: 200,
                   child: BarChart(
                     BarChartData(
-                      gridData: FlGridData(show: false),
+                      gridData: const FlGridData(show: false),
                       titlesData: FlTitlesData(
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
@@ -377,9 +377,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                             },
                           ),
                         ),
-                        rightTitles: AxisTitles(
+                        rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
-                        topTitles: AxisTitles(
+                        topTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
                       ),
                       borderData: FlBorderData(show: false),
@@ -449,7 +449,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
       child: Column(
         children: [
           // Operational Efficiency
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -460,7 +460,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   trend: '15% improvement',
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: StatCard(
                   label: 'Bed Turnover',
@@ -473,7 +473,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -484,7 +484,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   trend: 'Optimal range',
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: StatCard(
                   label: 'Equipment Usage',
@@ -545,7 +545,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   height: 200,
                   child: LineChart(
                     LineChartData(
-                      gridData: FlGridData(show: false),
+                      gridData: const FlGridData(show: false),
                       titlesData: FlTitlesData(
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
@@ -570,9 +570,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                             },
                           ),
                         ),
-                        rightTitles: AxisTitles(
+                        rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
-                        topTitles: AxisTitles(
+                        topTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
                       ),
                       borderData: FlBorderData(show: false),
@@ -587,7 +587,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                           isCurved: true,
                           color: AppColors.error,
                           barWidth: 3,
-                          dotData: FlDotData(show: true),
+                          dotData: const FlDotData(show: true),
                         ),
                       ],
                     ),
@@ -607,7 +607,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
       child: Column(
         children: [
           // Revenue Metrics
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -618,7 +618,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   trend: '+12% vs last month',
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: StatCard(
                   label: 'Outstanding Bills',
@@ -631,7 +631,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: StatCard(
@@ -642,7 +642,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   trend: '64% of revenue',
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: StatCard(
                   label: 'Net Profit',
@@ -675,7 +675,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   height: 200,
                   child: BarChart(
                     BarChartData(
-                      gridData: FlGridData(show: false),
+                      gridData: const FlGridData(show: false),
                       titlesData: FlTitlesData(
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
@@ -706,9 +706,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                             },
                           ),
                         ),
-                        rightTitles: AxisTitles(
+                        rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
-                        topTitles: AxisTitles(
+                        topTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
                       ),
                       borderData: FlBorderData(show: false),

@@ -100,7 +100,8 @@ void main() {
       );
 
       expect(find.text('Progress Test'), findsOneWidget);
-      expect(find.text('75 / 100'), findsOneWidget);
+      expect(find.text('75%'), findsOneWidget);
+      expect(find.text('75 of 100 completed'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
   });
@@ -119,8 +120,17 @@ void main() {
         ),
       );
 
-      final card = tester.widget<Card>(find.byType(Card));
-      expect(card.elevation, 8.0);
+      // StandardCard draws its elevation as a shadow on a decorated Container
+      // rather than using Material's Card.
+      final decorated = tester.widget<Container>(find.ancestor(
+        of: find.text('Styled Card'),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Container && widget.decoration is BoxDecoration,
+        ),
+      ));
+      final decoration = decorated.decoration as BoxDecoration;
+      expect(decoration.boxShadow, isNotEmpty);
+      expect(decoration.boxShadow!.first.blurRadius, 12);
     });
 
     testWidgets('StandardCard applies custom margin',

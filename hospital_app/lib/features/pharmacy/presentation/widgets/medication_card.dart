@@ -304,8 +304,9 @@ class _MedicationCardState extends ConsumerState<MedicationCard>
 
   Color _getStockColor() {
     if (widget.medication.currentStock == 0) return AppColors.error;
-    if (widget.medication.currentStock <= widget.medication.minStockLevel)
+    if (widget.medication.currentStock <= widget.medication.minStockLevel) {
       return AppColors.warning;
+    }
     return AppColors.success;
   }
 

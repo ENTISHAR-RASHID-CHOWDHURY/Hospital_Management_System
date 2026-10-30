@@ -221,7 +221,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemBuilder: (context, index) {
         final patient = filteredPatients[index];
-        return PatientCard(
+        return _buildPatientCard(
           patientId: patient['id'],
           fullName: patient['name'],
           age: patient['age'],
@@ -282,7 +282,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen>
     }
   }
 
-  Widget PatientCard({
+  Widget _buildPatientCard({
     required String patientId,
     required String fullName,
     required int age,

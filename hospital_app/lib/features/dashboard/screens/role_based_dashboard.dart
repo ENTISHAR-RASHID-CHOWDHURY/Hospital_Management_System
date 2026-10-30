@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/auth_models.dart';
-import '../../../core/services/hospital_api_service.dart';
 import '../../account/screens/account_management_screen.dart';
 import '../../notifications/notifications_screen.dart';
 import '../../admin/screens/user_management_screen.dart';
@@ -24,9 +23,6 @@ class RoleBasedDashboard extends ConsumerStatefulWidget {
 
 class _RoleBasedDashboardState extends ConsumerState<RoleBasedDashboard> {
   int _selectedIndex = 0;
-  final HospitalApiService _apiService = HospitalApiService();
-  Map<String, dynamic>? _statisticsCache;
-  bool _isLoadingStats = false;
 
   @override
   Widget build(BuildContext context) {
@@ -346,13 +342,6 @@ class _RoleBasedDashboardState extends ConsumerState<RoleBasedDashboard> {
           ),
         ];
     }
-  }
-
-  List<Widget> _getScreens(UserRole role) {
-    // Lazy loading - create screens only when needed
-    return List.generate(_getNavigationItems(role).length, (index) {
-      return _buildScreenForIndex(role, index);
-    });
   }
 
   Widget _buildScreenForIndex(UserRole role, int index) {

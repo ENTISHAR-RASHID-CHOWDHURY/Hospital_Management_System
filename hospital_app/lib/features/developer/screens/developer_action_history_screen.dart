@@ -89,7 +89,7 @@ class _DeveloperActionHistoryScreenState
 
   Future<bool> _showUndoConfirmation() async {
     final lastAction = await _actionLogger.getLastUndoableAction();
-    if (lastAction == null) return false;
+    if (lastAction == null || !mounted) return false;
 
     return await showDialog<bool>(
           context: context,

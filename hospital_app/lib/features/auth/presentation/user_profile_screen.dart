@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../core/auth/authentication_provider.dart';
 import '../../../core/auth/role_permissions.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
-import '../../../core/widgets/standard_cards.dart';
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:http/http.dart' as http;
 
 /// OAuth Authentication Service for Google and Apple Sign-In
@@ -10,13 +9,6 @@ class OAuthService {
   // OAuth Configuration
   static const String googleClientId = 'YOUR_GOOGLE_CLIENT_ID';
   static const String appleClientId = 'YOUR_APPLE_CLIENT_ID';
-
-  /// Generate a random state for OAuth security
-  String _generateState() {
-    final random = Random.secure();
-    final values = List<int>.generate(32, (i) => random.nextInt(256));
-    return base64Url.encode(values);
-  }
 
   /// Google Sign-In (User Mode and Staff Mode)
   /// [isDeveloperMode] - Use developer authentication flow

@@ -33,9 +33,7 @@ class OfflineManager {
       List.unmodifiable(_pendingOperations);
 
   Future<void> initialize() async {
-    _prefs = await SharedPreferences.getInstance();
-    await _loadOfflineData();
-    await _loadPendingOperations();
+    await initializeStorage();
 
     // Listen to connectivity changes
     _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
@@ -46,6 +44,18 @@ class OfflineManager {
 
     // Start periodic connectivity checks
     _startPeriodicConnectivityCheck();
+  }
+
+  /// Loads cached data and pending operations from local storage.
+  /// Called by [initialize]; tests call it directly to skip the connectivity
+  /// listeners and network checks.
+  @visibleForTesting
+  Future<void> initializeStorage() async {
+    _prefs = await SharedPreferences.getInstance();
+    _offlineData.clear();
+    _pendingOperations.clear();
+    await _loadOfflineData();
+    await _loadPendingOperations();
   }
 
   void _updateConnectionStatus(List<ConnectivityResult> results) async {
@@ -129,8 +139,11 @@ class OfflineManager {
     await _savePendingOperations();
   }
 
+  /// Pending operations, oldest first (the order they should be synced in).
   Future<List<OfflineOperation>> getPendingOperations() async {
-    return List.unmodifiable(_pendingOperations);
+    final sorted = List<OfflineOperation>.from(_pendingOperations)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return List.unmodifiable(sorted);
   }
 
   Future<void> _saveOfflineData() async {

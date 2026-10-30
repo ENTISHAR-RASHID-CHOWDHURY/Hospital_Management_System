@@ -99,7 +99,7 @@ class PermissionsScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                 ],
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

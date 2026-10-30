@@ -104,7 +104,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                   ),
-                  trailing: Icon(
+                  trailing: const Icon(
                     Icons.check_circle,
                     color: Colors.green,
                   ),
@@ -274,7 +274,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 24),
               ),
               const SizedBox(width: 12),
-              Text('Change Language'),
+              const Text('Change Language'),
             ],
           ),
           content: Text(
@@ -295,7 +295,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   SnackBar(
                     content: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.check_circle,
                           color: Colors.white,
                         ),
