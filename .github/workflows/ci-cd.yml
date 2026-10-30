@@ -57,6 +57,11 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hospital_test
 
+    - name: Seed database
+      run: npm run prisma:seed
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hospital_test
+
     - name: Run linting
       run: npm run lint
 
