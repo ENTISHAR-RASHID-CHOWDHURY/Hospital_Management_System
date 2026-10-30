@@ -21,6 +21,10 @@ const createAppointmentSchema = z.object({
 
 const updateAppointmentSchema = createAppointmentSchema.partial();
 
+// Appointment types a patient can book for themselves. Procedures, surgery
+// and emergencies (which also skip the future-date check) are booked by staff.
+const PATIENT_BOOKABLE_TYPES = ['CONSULTATION', 'FOLLOW_UP', 'TELEMEDICINE'];
+
 const rescheduleSchema = z.object({
   appointmentDate: z.string().datetime(),
   reason: z.string().optional()
@@ -188,9 +192,20 @@ router.get('/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 
 });
 
 // POST /api/appointments - Create new appointment
-router.post('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'RECEPTIONIST'), async (req, res) => {
+router.post('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
-    const validatedData = createAppointmentSchema.parse(req.body);
+    // Patients always book for themselves: their own patient record replaces
+    // any patientId sent, and staff-only fields are dropped.
+    const body = req.ownPatientId
+      ? { ...req.body, patientId: req.ownPatientId, roomNumber: undefined, isUrgent: false }
+      : req.body;
+    const validatedData = createAppointmentSchema.parse(body);
+
+    if (req.ownPatientId && !PATIENT_BOOKABLE_TYPES.includes(validatedData.type)) {
+      return res.status(403).json({
+        error: `Patients can book ${PATIENT_BOOKABLE_TYPES.join(', ')} appointments; contact reception for others`
+      });
+    }
     
     // Check if patient exists
     const patient = await prisma.patient.findUnique({

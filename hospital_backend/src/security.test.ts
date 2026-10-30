@@ -11,7 +11,8 @@ const fakeDb: Record<string, any> = {
   user: { findUnique: jest.fn(), create: jest.fn() },
   role: { findUnique: jest.fn() },
   patient: { findUnique: jest.fn(), count: jest.fn(), create: jest.fn() },
-  appointment: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
+  appointment: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn(), create: jest.fn() },
+  doctor: { findUnique: jest.fn() },
   bill: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
   labOrder: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
   labResult: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
@@ -222,6 +223,54 @@ describe('with the app running', () => {
       expect((await get('/api/laboratory/results/r1', patientHeaders())).status).toBe(200);
     });
 
+    describe('booking appointments', () => {
+      const booking = {
+        doctorId: 'doc1',
+        appointmentDate: new Date(Date.now() + 86_400_000).toISOString(),
+        duration: 30,
+        type: 'CONSULTATION',
+        reason: 'Check-up',
+      };
+      const book = (body: Record<string, unknown>, role = 'PATIENT') =>
+        fetch(`${baseUrl}/api/appointments`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessTokenFor(role)}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+      beforeEach(() => {
+        fakeDb.doctor.findUnique.mockResolvedValue({ id: 'doc1', isAvailable: true });
+        fakeDb.appointment.findMany.mockResolvedValue([]);
+        fakeDb.appointment.create.mockImplementation(async ({ data }: any) => ({ id: 'a1', ...data }));
+      });
+
+      it('a patient books for themselves, whatever patientId they send', async () => {
+        const res = await book({ ...booking, patientId: OTHER, roomNumber: '12B', isUrgent: true });
+
+        expect(res.status).toBe(201);
+        expect(fakeDb.appointment.create.mock.calls[0][0].data).toMatchObject({
+          patientId: OWN,
+          isUrgent: false,
+        });
+        expect(fakeDb.appointment.create.mock.calls[0][0].data.roomNumber).toBeUndefined();
+      });
+
+      it('a patient cannot book staff-only appointment types', async () => {
+        const res = await book({ ...booking, type: 'SURGERY' });
+
+        expect(res.status).toBe(403);
+        expect(fakeDb.appointment.create).not.toHaveBeenCalled();
+      });
+
+      it('staff still book for the patient they name', async () => {
+        const res = await book({ ...booking, patientId: OTHER }, 'RECEPTIONIST');
+
+        expect(res.status).toBe(201);
+        expect(fakeDb.patient.findUnique).not.toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 7 } }));
+        expect(fakeDb.appointment.create.mock.calls[0][0].data.patientId).toBe(OTHER);
+      });
+    });
+
     it('returns 403 when the account has no linked patient record', async () => {
       fakeDb.patient.findUnique.mockResolvedValue(null);
 
@@ -241,8 +290,8 @@ describe('with the app running', () => {
       expect(fakeDb.appointment.findMany.mock.calls[0][0].where.patientId).toBe(OTHER);
     });
 
-    it('still keeps patients out of write endpoints', async () => {
-      const res = await fetch(`${baseUrl}/api/appointments`, {
+    it('still keeps patients out of other write endpoints', async () => {
+      const res = await fetch(`${baseUrl}/api/billing/bills`, {
         method: 'POST',
         headers: { ...patientHeaders(), 'Content-Type': 'application/json' },
         body: '{}',
