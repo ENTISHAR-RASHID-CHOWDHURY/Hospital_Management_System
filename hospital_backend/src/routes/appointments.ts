@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate, requireRoles } from '../middleware/auth.middleware';
+import { authenticate, requireRoles, resolveOwnPatient } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
 const router = express.Router();
@@ -27,7 +27,7 @@ const rescheduleSchema = z.object({
 });
 
 // GET /api/appointments - Get appointments with filters
-router.get('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
+router.get('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { 
       patientId,
@@ -48,6 +48,8 @@ router.get('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RE
     if (doctorId) where.doctorId = doctorId;
     if (status) where.status = status;
     if (type) where.type = type;
+    // Patients only ever see their own records, whatever patientId they ask for.
+    if (req.ownPatientId) where.patientId = req.ownPatientId;
     if (isUrgent !== undefined) where.isUrgent = isUrgent === 'true';
     
     // Date filtering
@@ -124,7 +126,7 @@ router.get('/', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RE
 });
 
 // GET /api/appointments/:id - Get appointment by ID
-router.get('/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST'), async (req, res) => {
+router.get('/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -173,7 +175,8 @@ router.get('/:id', authenticate, requireRoles('SUPER_ADMIN', 'DOCTOR', 'NURSE', 
       }
     });
 
-    if (!appointment) {
+    // A patient asking for someone else's appointment gets the same 404 as a missing one.
+    if (!appointment || (req.ownPatientId && appointment.patientId !== req.ownPatientId)) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 

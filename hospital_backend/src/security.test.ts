@@ -8,6 +8,11 @@ const fakeDb = {
   $disconnect: jest.fn(),
   user: { findUnique: jest.fn(), create: jest.fn() },
   role: { findUnique: jest.fn() },
+  patient: { findUnique: jest.fn() },
+  appointment: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
+  bill: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
+  labOrder: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
+  labResult: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
   userSession: { create: jest.fn() },
   permission: { findMany: jest.fn() },
   auditLog: { create: jest.fn() },
@@ -104,10 +109,9 @@ describe('with the app running', () => {
       '/api/billing/stats',
       '/api/reports/revenue',
       '/api/reports/export/patients',
+      '/api/billing/payments',
       '/api/staff',
-      '/api/laboratory/orders',
-      '/api/laboratory/results',
-      '/api/appointments',
+      '/api/laboratory/stats',
       '/api/facility/admissions',
       '/api/doctors/some-doctor-id',
       '/api/notifications/admin/stats',
@@ -146,6 +150,101 @@ describe('with the app running', () => {
 
     it('keeps revenue reports away from clinical staff', async () => {
       const res = await get('/api/reports/revenue', { Authorization: `Bearer ${accessTokenFor('NURSE')}` });
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('patients see only their own records', () => {
+    const OWN = 'patient-own';
+    const OTHER = 'patient-other';
+    const patientHeaders = () => ({ Authorization: `Bearer ${accessTokenFor('PATIENT')}` });
+
+    beforeEach(() => {
+      fakeDb.patient.findUnique.mockResolvedValue({ id: OWN });
+      for (const model of [fakeDb.appointment, fakeDb.bill, fakeDb.labOrder, fakeDb.labResult]) {
+        model.findMany.mockResolvedValue([]);
+        model.count.mockResolvedValue(0);
+      }
+    });
+
+    it.each([
+      ['/api/appointments', fakeDb.appointment],
+      ['/api/billing/bills', fakeDb.bill],
+      ['/api/laboratory/orders', fakeDb.labOrder],
+    ])('%s is limited to the patient, even when another patientId is requested', async (path, model) => {
+      const res = await get(`${path}?patientId=${OTHER}`, patientHeaders());
+
+      expect(res.status).toBe(200);
+      expect(fakeDb.patient.findUnique).toHaveBeenCalledWith({ where: { userId: 7 }, select: { id: true } });
+      expect(model.findMany.mock.calls[0][0].where.patientId).toBe(OWN);
+      expect(model.count.mock.calls[0][0].where.patientId).toBe(OWN);
+    });
+
+    it('lab results are limited to the patient\'s own lab orders', async () => {
+      const res = await get(`/api/laboratory/results?patientId=${OTHER}`, patientHeaders());
+
+      expect(res.status).toBe(200);
+      expect(fakeDb.labResult.findMany.mock.calls[0][0].where.labOrder).toEqual({ patientId: OWN });
+    });
+
+    it.each([
+      ['/api/appointments/a1', fakeDb.appointment, 'Appointment not found'],
+      ['/api/billing/bills/b1', fakeDb.bill, 'Bill not found'],
+      ['/api/laboratory/orders/o1', fakeDb.labOrder, 'Lab order not found'],
+    ])('%s returns 404 for another patient\'s record', async (path, model, message) => {
+      model.findUnique.mockResolvedValue({ id: 'x', patientId: OTHER });
+
+      const res = await get(path, patientHeaders());
+
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: message });
+    });
+
+    it.each([
+      ['/api/appointments/a1', fakeDb.appointment],
+      ['/api/billing/bills/b1', fakeDb.bill],
+      ['/api/laboratory/orders/o1', fakeDb.labOrder],
+    ])('%s returns the patient\'s own record', async (path, model) => {
+      model.findUnique.mockResolvedValue({ id: 'x', patientId: OWN });
+
+      const res = await get(path, patientHeaders());
+
+      expect(res.status).toBe(200);
+    });
+
+    it('a lab result from another patient\'s order returns 404', async () => {
+      fakeDb.labResult.findUnique.mockResolvedValue({ id: 'r1', labOrder: { patientId: OTHER } });
+      expect((await get('/api/laboratory/results/r1', patientHeaders())).status).toBe(404);
+
+      fakeDb.labResult.findUnique.mockResolvedValue({ id: 'r1', labOrder: { patientId: OWN } });
+      expect((await get('/api/laboratory/results/r1', patientHeaders())).status).toBe(200);
+    });
+
+    it('returns 403 when the account has no linked patient record', async () => {
+      fakeDb.patient.findUnique.mockResolvedValue(null);
+
+      const res = await get('/api/appointments', patientHeaders());
+
+      expect(res.status).toBe(403);
+      expect(fakeDb.appointment.findMany).not.toHaveBeenCalled();
+    });
+
+    it('does not limit staff', async () => {
+      const res = await get(`/api/appointments?patientId=${OTHER}`, {
+        Authorization: `Bearer ${accessTokenFor('RECEPTIONIST')}`,
+      });
+
+      expect(res.status).toBe(200);
+      expect(fakeDb.patient.findUnique).not.toHaveBeenCalled();
+      expect(fakeDb.appointment.findMany.mock.calls[0][0].where.patientId).toBe(OTHER);
+    });
+
+    it('still keeps patients out of write endpoints', async () => {
+      const res = await fetch(`${baseUrl}/api/appointments`, {
+        method: 'POST',
+        headers: { ...patientHeaders(), 'Content-Type': 'application/json' },
+        body: '{}',
+      });
       expect(res.status).toBe(403);
     });
   });

@@ -37,6 +37,31 @@ export function requireRoles(...roles: string[]) {
   };
 }
 
+/**
+ * For PATIENT users, looks up the patient record linked to their account and
+ * stores its id on req.ownPatientId. Route handlers use it to limit results to
+ * the patient's own records. Other roles pass through unchanged.
+ */
+export async function resolveOwnPatient(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role !== 'PATIENT') {
+    return next();
+  }
+
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { userId: req.user.userId },
+      select: { id: true },
+    });
+    if (!patient) {
+      return res.status(403).json({ message: 'No patient record is linked to this account' });
+    }
+    req.ownPatientId = patient.id;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+}
+
 // Data filtering utilities for role-based access
 export const DataFilters = {
   // Patient data filtering based on user role

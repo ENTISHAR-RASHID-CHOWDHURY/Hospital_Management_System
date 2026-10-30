@@ -1,6 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate, requireRoles } from '../middleware/auth.middleware';
+import { authenticate, requireRoles, resolveOwnPatient } from '../middleware/auth.middleware';
 import { FINANCE_ROLES } from '../constants/roles';
 import { z } from 'zod';
 
@@ -40,7 +40,7 @@ const paymentSchema = z.object({
 });
 
 // GET /api/billing/bills - Get bills with filters
-router.get('/bills', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST'), async (req, res) => {
+router.get('/bills', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const {
       patientId,
@@ -57,6 +57,8 @@ router.get('/bills', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER'
     
     if (patientId) where.patientId = patientId;
     if (status) where.status = status;
+    // Patients only ever see their own records, whatever patientId they ask for.
+    if (req.ownPatientId) where.patientId = req.ownPatientId;
     
     // Date filtering
     if (startDate && endDate) {
@@ -145,7 +147,7 @@ router.get('/bills', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER'
 });
 
 // GET /api/billing/bills/:id - Get bill by ID
-router.get('/bills/:id', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST'), async (req, res) => {
+router.get('/bills/:id', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANAGER', 'ACCOUNTANT', 'RECEPTIONIST', 'PATIENT'), resolveOwnPatient, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -173,7 +175,7 @@ router.get('/bills/:id', authenticate, requireRoles('SUPER_ADMIN', 'BILLING_MANA
       }
     });
 
-    if (!bill) {
+    if (!bill || (req.ownPatientId && bill.patientId !== req.ownPatientId)) {
       return res.status(404).json({ error: 'Bill not found' });
     }
 
