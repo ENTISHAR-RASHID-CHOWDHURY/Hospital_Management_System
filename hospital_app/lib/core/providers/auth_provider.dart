@@ -254,85 +254,57 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(error: null);
   }
 
-  // Developer mode: Login as demo user for role-playing
-  Future<bool> loginAsDeveloper(String demoUserEmail, {String? role}) async {
+  /// Developer tools: become the demo user the backend picked.
+  ///
+  /// [roleSelectResponse] is the body of POST /api/developer/role/select,
+  /// which returns real access/refresh tokens for a seeded demo user. They are
+  /// stored exactly like a normal login, so every API call afterwards runs as
+  /// that user and role.
+  Future<bool> loginWithDemoSession(
+      Map<String, dynamic> roleSelectResponse) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      // Create a demo user object from the email and role
-      final user = _createDemoUserFromEmail(demoUserEmail, role: role);
+    final tokens = roleSelectResponse['tokens'];
+    final userJson = roleSelectResponse['user'];
+    final accessToken = tokens is Map ? tokens['accessToken'] : null;
 
-      if (user != null) {
-        // Set user state immediately for developer mode
-        state = AuthState(
-          user: user,
-          token: 'demo_token_${DateTime.now().millisecondsSinceEpoch}',
-          isLoading: false,
-        );
-        return true;
-      } else {
-        state = state.copyWith(
-          error: 'Failed to create demo user',
-          isLoading: false,
-        );
-        return false;
-      }
-    } catch (e) {
+    if (roleSelectResponse['success'] != true ||
+        accessToken is! String ||
+        userJson is! Map) {
       state = state.copyWith(
-        error: 'Developer login failed: ${e.toString()}',
         isLoading: false,
+        error: roleSelectResponse['error']?.toString() ??
+            'Could not switch to the demo user',
       );
       return false;
     }
-  }
 
-  // Helper method to create demo user from email
-  User? _createDemoUserFromEmail(String email, {String? role}) {
-    try {
-      // Parse role from string to UserRole enum
-      UserRole userRole = UserRole.PATIENT; // default
-
-      if (role != null) {
-        userRole = _parseUserRole(role);
-      } else {
-        // Try to extract from email (fallback)
-        if (email.contains('admin')) {
-          userRole = UserRole.ADMIN;
-        } else if (email.contains('doctor')) {
-          userRole = UserRole.DOCTOR;
-        } else if (email.contains('nurse')) {
-          userRole = UserRole.NURSE;
-        } else if (email.contains('pharmacist')) {
-          userRole = UserRole.PHARMACIST;
-        } else if (email.contains('lab') || email.contains('laboratory')) {
-          userRole = UserRole.LABORATORY;
-        } else if (email.contains('receptionist')) {
-          userRole = UserRole.RECEPTIONIST;
-        }
-      }
-
-      // Extract name from email
-      final nameParts = email.split('@')[0].split('.');
-      final firstName =
-          nameParts.isNotEmpty ? nameParts[0].toUpperCase() : 'Demo';
-      final lastName =
-          nameParts.length > 1 ? nameParts[1].toUpperCase() : 'User';
-
-      final user = User(
-        id: 'demo_${DateTime.now().millisecondsSinceEpoch}',
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        role: userRole,
-      );
-
-      return user;
-    } catch (e) {
-      return null;
+    final refreshToken = (tokens as Map)['refreshToken'];
+    await _storage.saveToken(accessToken);
+    if (refreshToken is String) {
+      await _storage.saveRefreshToken(refreshToken);
     }
+
+    state = AuthState(user: _userFromDemoJson(userJson), token: accessToken);
+    return true;
   }
 
-  // Helper method to parse string role to UserRole enum
+  User _userFromDemoJson(Map<dynamic, dynamic> json) {
+    final email = json['email']?.toString() ?? '';
+    final displayName = json['displayName']?.toString().trim() ?? '';
+    final nameParts = displayName.isEmpty
+        ? <String>[email.split('@').first]
+        : displayName.split(RegExp(r'\s+'));
+
+    return User(
+      id: json['id'].toString(),
+      email: email,
+      firstName: nameParts.first,
+      lastName: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
+      role: _parseUserRole(json['role']?.toString() ?? ''),
+    );
+  }
+
   UserRole _parseUserRole(String roleString) {
     switch (roleString.toUpperCase()) {
       case 'ADMIN':
