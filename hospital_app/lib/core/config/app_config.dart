@@ -35,7 +35,7 @@ class AppConfig {
         }
       }
     } catch (e) {
-      print('Error detecting IP: $e');
+      debugPrint('Error detecting IP: $e');
     }
 
     // Fallback to cached IP or default

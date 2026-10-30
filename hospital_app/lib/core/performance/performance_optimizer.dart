@@ -230,7 +230,7 @@ class ImageOptimizer {
 /// Memory management utilities
 class MemoryManager {
   final List<VoidCallback> _disposables = [];
-  int _memoryWarningThreshold = 100; // MB
+  final int _memoryWarningThreshold = 100; // MB
 
   /// Register a disposable resource
   void registerDisposable(VoidCallback dispose) {
@@ -503,9 +503,9 @@ class PerformanceMonitor extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       'Performance Stats:',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,

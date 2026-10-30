@@ -6,14 +6,12 @@ void main() {
   group('AdvancedSearchWidget Tests', () {
     testWidgets('Search widget displays correctly',
         (WidgetTester tester) async {
-      Map<String, dynamic> searchResults = {};
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: AdvancedSearchWidget(
               hintText: 'Test search hint',
-              onSearchChanged: (data) => searchResults = data,
+              onSearchChanged: (_) {},
               availableFilters: [
                 SearchFilter.text(key: 'name', label: 'Name'),
                 SearchFilter.dropdown(
@@ -41,7 +39,7 @@ void main() {
             body: AdvancedSearchWidget(
               hintText: 'Search...',
               onSearchChanged: (data) => searchResults = data,
-              availableFilters: [],
+              availableFilters: const [],
             ),
           ),
         ),
@@ -104,12 +102,12 @@ void main() {
       await tester.tap(find.byIcon(Icons.filter_list));
       await tester.pumpAndSettle();
 
-      // Find and tap dropdown
-      await tester.tap(find.text('Status'));
+      // Open the dropdown
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
 
-      // Select an option
-      await tester.tap(find.text('Active'));
+      // Select an option from the open menu
+      await tester.tap(find.text('Active').last);
       await tester.pumpAndSettle();
 
       expect(searchResults['filters']['status'], 'Active');
@@ -117,14 +115,12 @@ void main() {
 
     testWidgets('Date range filter works correctly',
         (WidgetTester tester) async {
-      Map<String, dynamic> searchResults = {};
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: AdvancedSearchWidget(
               hintText: 'Search...',
-              onSearchChanged: (data) => searchResults = data,
+              onSearchChanged: (_) {},
               availableFilters: [
                 SearchFilter.dateRange(key: 'dateRange', label: 'Date Range'),
               ],
@@ -138,7 +134,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Date Range'), findsOneWidget);
-      expect(find.byIcon(Icons.date_range), findsOneWidget);
+      // One picker button each for the start and end date
+      expect(find.byIcon(Icons.calendar_today), findsNWidgets(2));
     });
 
     testWidgets('Clear filters works correctly', (WidgetTester tester) async {
@@ -151,25 +148,41 @@ void main() {
               hintText: 'Search...',
               onSearchChanged: (data) => searchResults = data,
               availableFilters: [
-                SearchFilter.text(key: 'name', label: 'Name'),
+                SearchFilter.dropdown(
+                  key: 'status',
+                  label: 'Status',
+                  options: ['Active', 'Inactive'],
+                ),
               ],
             ),
           ),
         ),
       );
 
-      // Enter search query
+      // Enter a search query
       await tester.enterText(find.byType(TextField), 'test');
       await tester.pump();
 
-      // Open filter panel and clear
+      // Open the filter panel and set a filter
       await tester.tap(find.byIcon(Icons.filter_list));
       await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Active').last);
+      await tester.pumpAndSettle();
+      expect(searchResults['filters'], {'status': 'Active'});
 
-      await tester.tap(find.text('Clear Filters'));
+      // Clear All resets the filters but keeps the typed query
+      // The filter panel's "Clear All" button (a chip with the same label also
+      // appears once a filter is active)
+      await tester.tap(find.descendant(
+        of: find.byWidgetPredicate((widget) => widget is TextButton),
+        matching: find.text('Clear All'),
+      ));
       await tester.pumpAndSettle();
 
-      expect(searchResults['query'], '');
+      expect(searchResults['filters'], isEmpty);
+      expect(searchResults['query'], 'test');
     });
   });
 

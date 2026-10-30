@@ -14,7 +14,7 @@ class ReportsMainScreen extends ConsumerStatefulWidget {
 
 class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
   final List<ReportCard> _reportCards = [
-    ReportCard(
+    const ReportCard(
       type: ReportType.patient,
       title: 'Patient Reports',
       description:
@@ -26,7 +26,7 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
         'Treatment Outcomes'
       ],
     ),
-    ReportCard(
+    const ReportCard(
       type: ReportType.financial,
       title: 'Financial Reports',
       description:
@@ -38,7 +38,7 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
         'Cost Analytics'
       ],
     ),
-    ReportCard(
+    const ReportCard(
       type: ReportType.appointment,
       title: 'Appointment Reports',
       description:
@@ -50,7 +50,7 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
         'Wait Time Analysis'
       ],
     ),
-    ReportCard(
+    const ReportCard(
       type: ReportType.staff,
       title: 'Staff Reports',
       description:
@@ -62,7 +62,7 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
         'Skill Assessment'
       ],
     ),
-    ReportCard(
+    const ReportCard(
       type: ReportType.medication,
       title: 'Medication Reports',
       description:
@@ -74,7 +74,7 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
         'Cost Analysis'
       ],
     ),
-    ReportCard(
+    const ReportCard(
       type: ReportType.laboratory,
       title: 'Laboratory Reports',
       description:
@@ -401,8 +401,8 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
             ...['Daily', 'Weekly', 'Monthly', 'Quarterly'].map(
               (schedule) => ListTile(
                 dense: true,
-                leading:
-                    Icon(Icons.schedule, color: AppColors.primary, size: 16),
+                leading: const Icon(Icons.schedule,
+                    color: AppColors.primary, size: 16),
                 title: Text(schedule,
                     style: const TextStyle(color: Colors.white, fontSize: 14)),
                 trailing: Switch(
@@ -454,7 +454,7 @@ class _ReportsMainScreenState extends ConsumerState<ReportsMainScreen> {
                 child: ListView.builder(
                   itemCount: 5,
                   itemBuilder: (context, index) {
-                    final reportTypes = ReportType.values;
+                    const reportTypes = ReportType.values;
                     final type = reportTypes[index % reportTypes.length];
                     return Card(
                       color: AppColors.surfaceDark.withOpacity(0.5),

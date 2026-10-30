@@ -613,13 +613,13 @@ class _VitalSignsEntryScreenState extends ConsumerState<VitalSignsEntryScreen> {
       lastDate: DateTime.now(),
     );
 
-    if (date != null) {
+    if (date != null && mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_recordedTime),
       );
 
-      if (time != null) {
+      if (time != null && mounted) {
         setState(() {
           _recordedTime = DateTime(
             date.year,

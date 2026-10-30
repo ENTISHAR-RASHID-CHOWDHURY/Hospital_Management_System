@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -155,7 +156,7 @@ class AuthService {
         );
       }
     } catch (e) {
-      print('Error getting stored auth data: $e');
+      debugPrint('Error getting stored auth data: $e');
     }
 
     return AuthState();
@@ -176,7 +177,7 @@ class AuthService {
         return User.fromJson(data['user']);
       }
     } catch (e) {
-      print('Error getting current user: $e');
+      debugPrint('Error getting current user: $e');
     }
 
     return null;
@@ -286,7 +287,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _authService.logout();
     } catch (e) {
-      print('Logout error: $e');
+      debugPrint('Logout error: $e');
     }
 
     state = AuthState();

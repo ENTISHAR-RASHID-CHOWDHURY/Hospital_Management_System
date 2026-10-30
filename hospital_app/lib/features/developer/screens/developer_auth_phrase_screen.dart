@@ -64,7 +64,7 @@ class _DeveloperAuthPhraseScreenState extends State<DeveloperAuthPhraseScreen> {
               // Developer Mode Icon
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.warning,
                   shape: BoxShape.circle,
                 ),
@@ -109,15 +109,16 @@ class _DeveloperAuthPhraseScreenState extends State<DeveloperAuthPhraseScreen> {
                     labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
                     hintText: 'Enter special password',
                     hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-                    prefixIcon: Icon(Icons.lock, color: AppColors.warning),
+                    prefixIcon:
+                        const Icon(Icons.lock, color: AppColors.warning),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: AppColors.warning, width: 2),
+                          const BorderSide(color: AppColors.warning, width: 2),
                     ),
                     filled: true,
                     fillColor: AppColors.surfaceDark,
@@ -194,7 +195,8 @@ class _DeveloperAuthPhraseScreenState extends State<DeveloperAuthPhraseScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.warning, color: AppColors.warning, size: 20),
+                    const Icon(Icons.warning,
+                        color: AppColors.warning, size: 20),
                     const SizedBox(width: 12),
                     Flexible(
                       child: Text(

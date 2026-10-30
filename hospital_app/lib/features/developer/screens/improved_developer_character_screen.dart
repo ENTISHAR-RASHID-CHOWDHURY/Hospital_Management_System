@@ -29,7 +29,6 @@ class _ImprovedDeveloperCharacterScreenState
   String? _selectedRole;
   String _searchQuery = '';
 
-  List<Map<String, dynamic>> _allCharacters = [];
   List<Map<String, dynamic>> _filteredCharacters = [];
 
   final DeveloperActionLogger _actionLogger = DeveloperActionLogger();
@@ -101,7 +100,6 @@ class _ImprovedDeveloperCharacterScreenState
     try {
       // Just initialize - we'll load characters when a role is selected
       setState(() {
-        _allCharacters = [];
         _isLoading = false;
       });
     } catch (e) {
@@ -119,9 +117,9 @@ class _ImprovedDeveloperCharacterScreenState
     });
 
     try {
-      print('Loading characters for role: $role'); // Debug log
+      debugPrint('Loading characters for role: $role'); // Debug log
       final response = await widget.developerService.getDemoUsers(role);
-      print('API Response: $response'); // Debug log
+      debugPrint('API Response: $response'); // Debug log
 
       if (response['success'] == true && response['demoUsers'] != null) {
         final List<dynamic> users = response['demoUsers'];
@@ -129,17 +127,18 @@ class _ImprovedDeveloperCharacterScreenState
           _filteredCharacters = users.cast<Map<String, dynamic>>();
           _isLoading = false;
         });
-        print('Loaded ${_filteredCharacters.length} characters'); // Debug log
+        debugPrint(
+            'Loaded ${_filteredCharacters.length} characters'); // Debug log
       } else {
         setState(() {
           _errorMessage =
               response['error'] ?? 'Failed to load characters for $role';
           _isLoading = false;
         });
-        print('API Error: ${response['error']}'); // Debug log
+        debugPrint('API Error: ${response['error']}'); // Debug log
       }
     } catch (e) {
-      print('Exception loading characters: $e'); // Debug log
+      debugPrint('Exception loading characters: $e'); // Debug log
       setState(() {
         _errorMessage = 'Failed to load characters: ${e.toString()}';
         _isLoading = false;

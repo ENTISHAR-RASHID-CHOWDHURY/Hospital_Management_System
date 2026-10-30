@@ -1,12 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hospital_app/core/services/offline_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('OfflineManager Tests', () {
     late OfflineManager offlineManager;
 
-    setUp(() {
+    setUp(() async {
+      // In-memory storage, reset before every test.
+      SharedPreferences.setMockInitialValues({});
       offlineManager = OfflineManager.instance;
+      await offlineManager.initializeStorage();
     });
 
     test('OfflineManager is singleton', () {
@@ -86,9 +92,10 @@ void main() {
       expect(data1, isNotNull);
       expect(data2, isNotNull);
 
-      // Note: clearAllCache method would need to be implemented in OfflineManager
-      // This is just a test structure for future implementation
-      expect(true, isTrue); // Placeholder
+      await offlineManager.clearCache();
+
+      expect(await offlineManager.getCachedData('key1'), isNull);
+      expect(await offlineManager.getCachedData('key2'), isNull);
     });
   });
 }

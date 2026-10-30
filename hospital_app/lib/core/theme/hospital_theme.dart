@@ -75,9 +75,8 @@ class HospitalTheme {
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark 
-            ? colorScheme.surface.withOpacity(0.8)
-            : colorScheme.surface,
+        fillColor:
+            isDark ? colorScheme.surface.withOpacity(0.8) : colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(_borderRadius),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -94,7 +93,8 @@ class HospitalTheme {
           borderRadius: BorderRadius.circular(_borderRadius),
           borderSide: BorderSide(color: colorScheme.error),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         hintStyle: GoogleFonts.inter(
           color: colorScheme.onSurface.withOpacity(0.6),
         ),
