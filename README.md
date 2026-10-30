@@ -40,20 +40,31 @@ flutter pub get
 flutter run
 ```
 
-### 3. Seed All Demo Data (One Command!)
+### 3. Seed Demo Data
 ```powershell
 cd hospital_backend
-npx ts-node prisma/seeds/completeSystem.seed.ts
+npm run prisma:seed
 ```
 
-This will seed:
-- ✅ 58 Medicines across 16 categories
-- ✅ 217 Prescriptions with realistic data
-- ✅ 296 Lab Tests & Results
-- ✅ 230 Hospital Beds across 7 wards
-- ✅ 150 Bills with $32K revenue
-- ✅ 498 Appointments
-- ✅ 550 Users across 7 roles
+This runs `prisma/seed.ts` (the same as `npx prisma db seed`; `npx prisma migrate reset` also runs it). It is safe to run more than once. It creates:
+- The 10 roles (Super Admin, Doctor, Nurse, Receptionist, Pharmacist, Lab Technician, Billing Manager, Facility Manager, Accountant, Patient)
+- Dashboard shortcuts for each role
+- One demo login per role, marked as a demo account:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Super Admin | `admin@hospital.com` | `admin123` |
+| Doctor | `doctor@hospital.com` | `doctor123` |
+| Nurse | `nurse@hospital.com` | `nurse123` |
+| Receptionist | `receptionist@hospital.com` | `receptionist123` |
+| Pharmacist | `pharmacist@hospital.com` | `pharmacist123` |
+| Lab Technician | `lab@hospital.com` | `lab123` |
+| Billing Manager | `billing@hospital.com` | `billing123` |
+| Facility Manager | `facility@hospital.com` | `facility123` |
+| Accountant | `accountant@hospital.com` | `accountant123` |
+| Patient | `patient@hospital.com` | `patient123` |
+
+> ⚠️ These passwords are public. Only seed development and test databases, never production.
 
 ## 📊 Complete Feature Set
 
@@ -87,7 +98,7 @@ This will seed:
 - **Lab Staff**: Test orders, results entry, equipment management
 - **Admin**: Full system access, user management, analytics
 
-### Medicine Inventory System (58 Medicines)
+### Medicine Inventory System
 - Complete medicine database across 16 categories:
   - ANTIBIOTIC (5): Amoxicillin, Azithromycin, Ciprofloxacin, etc.
   - ANALGESIC (5): Paracetamol, Ibuprofen, Tramadol, Morphine, etc.
@@ -109,14 +120,14 @@ This will seed:
 - Expiry date tracking and alerts
 - Prescription-only vs over-the-counter classification
 
-### Prescription System (217 Prescriptions)
+### Prescription System
 - Digital prescription creation and management
 - Medication dosage and frequency tracking
 - Prescription history and refill management
 - Integration with medicine inventory
 - Doctor-patient prescription relationships
 
-### Laboratory Management (296 Tests)
+### Laboratory Management
 - Comprehensive test catalog across multiple categories:
   - HEMATOLOGY: CBC, Blood counts, Coagulation studies
   - BIOCHEMISTRY: Liver function, Kidney function, Cardiac markers
@@ -128,7 +139,7 @@ This will seed:
 - Normal range validation
 - Critical value alerts
 
-### Hospital Bed Management (230 Beds)
+### Hospital Bed Management
 - 7 Ward types with specialized bed configurations:
   - GENERAL: 50 beds (2-4 bed rooms)
   - ICU: 20 beds (single rooms, ventilator equipped)
@@ -141,7 +152,7 @@ This will seed:
 - Patient admission and discharge management
 - Bed assignment optimization
 
-### Billing System (150 Bills, $32K Revenue)
+### Billing System
 - Comprehensive billing with multiple charge types:
   - CONSULTATION: Doctor consultation fees
   - PROCEDURE: Medical procedures and surgeries
@@ -153,7 +164,7 @@ This will seed:
 - Payment tracking and receipt generation
 - Revenue analytics and reporting
 
-### Appointment System (498 Appointments)
+### Appointment System
 - Real-time appointment scheduling with PostgreSQL backend
 - Advanced filtering by date, doctor, department, and status
 - Appointment status tracking (scheduled, completed, cancelled)
@@ -161,7 +172,7 @@ This will seed:
 - Conflict detection and automatic scheduling
 - Multi-status support: SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
 
-### User Management (550 Users)
+### User Management
 - Multi-role user system with granular permissions
 - Patient registration and profile management
 - Healthcare provider management (doctors, nurses, staff)
@@ -276,7 +287,7 @@ Hospital_Management_System/
 │   ├── prisma/                  # Database schema and migrations
 │   │   ├── schema.prisma        # Database schema
 │   │   ├── migrations/          # Database migrations
-│   │   └── seeds/               # Demo data seeds
+│   │   └── seed.ts              # Demo data seed (npm run prisma:seed)
 │   └── logs/                    # Application logs
 └── Documentation/               # Project documentation
 ```
@@ -373,8 +384,8 @@ docker build -t hospital-frontend ./hospital_app
 # Run migrations in production
 npx prisma migrate deploy
 
-# Seed production data (optional)
-npx prisma db seed
+# Do NOT run the seed in production: it creates demo accounts
+# (including admin@hospital.com) with publicly known passwords.
 ```
 
 ## Testing
@@ -1189,109 +1200,54 @@ Need help? We're here to support you:
 
 ## Developer Mode 🛠️
 
-Developer Mode is a powerful isolated testing environment that allows developers to test all features without affecting production data. It provides a complete sandbox with pre-generated demo users across all roles.
+Developer Mode lets a developer sign in as one of the seeded demo users to try the app in each role. It is **off by default**, only works outside production, and can only switch into demo accounts, never real ones.
 
-### Access Developer Mode
+### Enable It
 
-1. **Entry Point**: Click the "Enter Developer Mode" button on the login screen (amber-colored section below the main form)
-2. **Authentication Phrase**: Enter the special authentication phrase: `dev@hospital2025`
-3. **Developer Account**: Create or log in to your developer account (max 5 accounts)
-4. **Role Selection**: Choose any role to impersonate
-5. **Demo User**: Select from pre-generated demo users for that role
+1. In `hospital_backend/.env`:
+   ```env
+   DEVELOPER_MODE=true
+   DEVELOPER_PHRASE=<a long random phrase of your choice>
+   ```
+   The server refuses to start with `DEVELOPER_MODE=true` when `NODE_ENV=production`, and rejects placeholder phrases.
+2. Seed the database (`npm run prisma:seed`) so the demo accounts exist.
+3. Run the app with the same phrase:
+   ```bash
+   flutter run --dart-define=DEVELOPER_PHRASE=<the same phrase>
+   ```
+   Builds without it show "Developer tools are not enabled in this build".
 
-### Demo Users Available
-
-Developer Mode comes with pre-seeded demo users for comprehensive testing:
-
-- **25 Demo Doctors** - Various specialties (Cardiology, Neurology, Pediatrics, etc.) - 50-50 mix of male and female names
-- **500 Demo Patients** - Complete patient profiles with medical history - 50-50 mix of male and female names
-- **10 Demo Nurses** - Different departments and shift types - 50-50 mix of male and female names
-- **5 Demo Receptionists** - Front desk operations staff - Male names
-- **5 Demo Laboratory Staff** - Lab technicians and specialists - Male names
-- **3 Demo Pharmacists** - Licensed pharmacy professionals - Male names
-- **2 Demo Administrators** - Full system access admins - Male names
-
-All demo users use the password: `demo123`
-
-**Note:** Demo user names use diverse naming conventions appropriate for a global healthcare system.
-
-### Key Features
-
-- **Complete Data Isolation**: Demo data never affects production
-- **Role Impersonation**: Test any role without creating production accounts
-- **Pre-generated Users**: 550+ demo users ready to use
-- **Separate Database Tables**: Demo users stored in dedicated tables
-- **Developer Audit Logs**: Track all developer actions
-- **Session Management**: Manage multiple developer sessions
-- **Quick Role Switching**: Switch between roles seamlessly
-
-### Developer Mode Workflow
+### Workflow
 
 ```
-1. Click "Enter Developer Mode" button on login screen
-2. Enter authentication phrase: dev@hospital2025
-3. Create/Login developer account
-4. Select role (e.g., Doctor)
-5. Choose demo doctor from list
-6. Test app features with demo data
-7. Logout from role → Return to developer dashboard
-8. Select different role or logout completely
+1. Click "Enter Developer Mode" on the login screen
+2. Enter your DEVELOPER_PHRASE
+3. Create or log in to a developer account
+4. Pick a role, then a demo user for that role
+5. Use the app as that user (real tokens, real permissions)
+6. Switch to another role or log out
 ```
 
 ### API Endpoints
 
-Developer Mode provides dedicated API endpoints:
+Only exist when `DEVELOPER_MODE=true`. Every request needs the phrase in the `x-developer-phrase` header; all but account creation and login also need a developer token (`Authorization: Bearer ...`).
 
-- `POST /api/developer/accounts/create` - Create developer account
-- `POST /api/developer/auth/login` - Developer login
+- `POST /api/developer/accounts/create` - Create a developer account
+- `POST /api/developer/auth/login` - Developer login (returns a developer token)
 - `POST /api/developer/auth/logout` - Developer logout
-- `DELETE /api/developer/accounts/:id` - Delete developer account
-- `GET /api/developer/accounts` - List all developer accounts
-- `POST /api/developer/role/select` - Select role to impersonate
-- `GET /api/developer/session` - Get current session info
-- `GET /api/developer/demo-users/:role` - Get demo users by role
+- `GET /api/developer/accounts` - List developer accounts
+- `DELETE /api/developer/accounts/:id` - Delete a developer account
+- `GET /api/developer/demo-users/:role` - Demo users for a role
+- `POST /api/developer/role/select` - Sign in as a demo user; returns normal access/refresh tokens for that user
+- `GET /api/developer/session` - The role and demo user currently selected
 
-All requests require the authentication phrase in the `x-developer-phrase` header.
+### How It Is Kept Safe
 
-### Environment Configuration
-
-Set the developer authentication phrase in your `.env`:
-
-```env
-DEVELOPER_AUTH_PHRASE=dev@hospital2025
-```
-
-### Database Schema
-
-Developer Mode adds these tables:
-
-- `DeveloperUser` - Developer account information
-- `DeveloperSession` - Active developer sessions
-- `DeveloperAuditLog` - Developer activity logs
-- `DemoDoctor` - Demo doctor profiles
-- `DemoPatient` - Demo patient records
-- `DemoNurse` - Demo nurse profiles
-- `DemoReceptionist` - Demo receptionist accounts
-- `DemoLaboratory` - Demo lab staff profiles
-- `DemoPharmacist` - Demo pharmacist accounts
-- `DemoAdmin` - Demo administrator accounts
-
-### Security Notes
-
-- Maximum 5 developer accounts can exist simultaneously
-- Developer sessions expire after 24 hours
-- All developer actions are logged in audit trail
-- Demo data is completely isolated from production
-- Authentication phrase required for all developer endpoints
-
-### Testing Benefits
-
-- **No Production Impact**: Test destructive operations safely
-- **Realistic Data**: 550+ pre-populated demo users
-- **All Roles Available**: Test every permission level
-- **Quick Setup**: No manual user creation needed
-- **Reproducible Tests**: Consistent demo data for testing
-- **Multi-role Workflows**: Test cross-role interactions
+- Off unless `DEVELOPER_MODE=true`; never allowed in production
+- The phrase lives in your `.env` and build settings, not in the code
+- Developer accounts are stored separately (`DeveloperAccount` table) and use their own token type, which the hospital API rejects
+- Only users marked as demo accounts (`User.isDemo`, set by the seed) can be impersonated
+- Every switch into a demo user is written to the audit log (`DEVELOPER_IMPERSONATION`)
 
 ---
 

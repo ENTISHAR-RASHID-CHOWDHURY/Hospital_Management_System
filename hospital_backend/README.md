@@ -58,4 +58,6 @@ cmd /c npm run lint
 
 ## Seed Data
 
-The seed script ensures baseline roles and sample dashboard options exist for every role defined in `src/constants/roles.ts`. Customize `prisma/seed.ts` to add more fixtures.
+Run it with `npm run prisma:seed` (or `npx prisma db seed`; the command is configured in `prisma.config.ts`). It is safe to run repeatedly. It creates the roles from `src/constants/roles.ts`, dashboard shortcuts for each role, and one demo login per role (`admin@hospital.com` / `admin123`, `doctor@hospital.com` / `doctor123`, …; see `prisma/seed.ts`). The demo logins are marked `isDemo`, which is what Developer Mode may impersonate.
+
+**Never seed a production database**: the demo passwords are public. Customize `prisma/seed.ts` to add more fixtures.
