@@ -2,39 +2,59 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, requireRoles, DataFilters } from '../middleware/auth.middleware';
 import { z } from 'zod';
+import { createPatientForUser, nextPatientNumber, patientCreateSchema, selfPatientProfileSchema } from '../services/patient-records';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-// Validation schemas
-const patientCreateSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string().transform((str) => new Date(str)),
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
-  phone: z.string().min(10, 'Valid phone number is required'),
-  email: z.string().email('Valid email is required').optional(),
-  address: z.object({
-    street: z.string().min(1, 'Street is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    zip: z.string().min(1, 'ZIP code is required'),
-    country: z.string().default('USA'),
-  }),
-  emergencyContact: z.object({
-    name: z.string().min(1, 'Emergency contact name is required'),
-    relationship: z.string().min(1, 'Relationship is required'),
-    phone: z.string().min(10, 'Valid phone number is required'),
-  }),
-  bloodType: z.enum(['A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE']).optional(),
-  allergies: z.array(z.string()).default([]),
-  chronicConditions: z.array(z.string()).default([]),
-  insuranceInfo: z.object({
-    provider: z.string().optional(),
-    policyNumber: z.string().optional(),
-    groupNumber: z.string().optional(),
-  }).optional(),
-});
+// GET /api/patients/me - the signed-in patient's own record
+// (defined before /:id so 'me' isn't treated as an id)
+router.get('/me',
+  authenticate,
+  requireRoles('PATIENT'),
+  async (req: Request, res: Response) => {
+    try {
+      const patient = await prisma.patient.findUnique({ where: { userId: req.user!.userId } });
+      if (!patient) {
+        return res.status(404).json({ error: 'No patient record is linked to this account yet' });
+      }
+      res.json(patient);
+    } catch (error) {
+      console.error('Error fetching own patient record:', error);
+      res.status(500).json({ error: 'Failed to fetch patient record' });
+    }
+  }
+);
+
+// POST /api/patients/me - a patient creates their own record, linked to
+// their account (for accounts that signed up without a patient profile)
+router.post('/me',
+  authenticate,
+  requireRoles('PATIENT'),
+  async (req: Request, res: Response) => {
+    try {
+      const profile = selfPatientProfileSchema.parse(req.body);
+      const userId = req.user!.userId;
+
+      if (await prisma.patient.findUnique({ where: { userId } })) {
+        return res.status(409).json({ error: 'A patient record is already linked to this account' });
+      }
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const patient = await createPatientForUser(prisma, user, profile);
+      res.status(201).json(patient);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation failed', details: error.issues });
+      }
+      console.error('Error creating own patient record:', error);
+      res.status(500).json({ error: 'Failed to create patient record' });
+    }
+  }
+);
 
 // Get all patients with role-based filtering
 router.get('/', 
@@ -250,9 +270,7 @@ router.post('/',
         return res.status(400).json({ error: 'Patient already exists' });
       }
 
-      // Generate patient number
-      const patientCount = await prisma.patient.count();
-      const patientNumber = `PAT${new Date().getFullYear()}${String(patientCount + 1).padStart(6, '0')}`;
+      const patientNumber = await nextPatientNumber(prisma);
 
       const patient = await prisma.patient.create({
         data: {

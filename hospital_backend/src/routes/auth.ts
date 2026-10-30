@@ -6,6 +6,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken, JwtPayloadData }
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { AuditLogger } from '../utils/audit-logger';
 import { SELF_REGISTER_ROLE } from '../constants/roles';
+import { createPatientForUser, selfPatientProfileSchema } from '../services/patient-records';
 
 // Type alias for authenticated route handlers  
 type AuthenticatedHandler = (req: AuthenticatedRequest, res: any, next?: any) => any;
@@ -29,7 +30,10 @@ const registerSchema = z.object({
   password: z.string().min(6),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z.string().optional()
+  phone: z.string().optional(),
+  // Optional: create the linked patient record at the same time. Without it,
+  // the patient can add it later with POST /api/patients/me.
+  patientProfile: selfPatientProfileSchema.optional()
 });
 
 const changePasswordSchema = z.object({
@@ -150,7 +154,7 @@ router.post('/register', async (req, res) => {
   try {
     // Any role/roleId in the body is ignored: public sign-up always creates a patient.
     // Staff accounts are created by an admin through POST /api/users.
-    const { email, password, firstName, lastName, phone } = registerSchema.parse(req.body);
+    const { email, password, firstName, lastName, phone, patientProfile } = registerSchema.parse(req.body);
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -175,20 +179,25 @@ router.post('/register', async (req, res) => {
     const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash: hashedPassword,
-        displayName: `${firstName} ${lastName}`,
-        firstName,
-        lastName,
-        phone,
-        roleId
-      },
-      include: {
-        role: true
-      }
+    // Create the user, and their patient record if a profile was given, in one
+    // transaction so an account is never left half-created.
+    const { user, patient } = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          passwordHash: hashedPassword,
+          displayName: `${firstName} ${lastName}`,
+          firstName,
+          lastName,
+          phone,
+          roleId
+        },
+        include: {
+          role: true
+        }
+      });
+      const patient = patientProfile ? await createPatientForUser(tx, user, patientProfile) : null;
+      return { user, patient };
     });
 
     // Log user registration
@@ -231,6 +240,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({
       user: userWithoutPassword,
+      patient,
       tokens: {
         accessToken,
         refreshToken
