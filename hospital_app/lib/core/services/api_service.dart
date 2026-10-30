@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:hospital_app/core/config/app_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3001/api';
+  static String get baseUrl => AppConfig.apiUrl;
 
   final String? _token;
 

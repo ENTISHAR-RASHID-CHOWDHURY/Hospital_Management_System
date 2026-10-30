@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hospital_app/core/config/app_config.dart';
 
 // Models
 class User {
@@ -95,7 +96,7 @@ class AuthState {
 
 // Auth Service
 class AuthService {
-  static const String baseUrl = 'http://localhost:3001/api';
+  static String get baseUrl => AppConfig.apiUrl;
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
 

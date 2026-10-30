@@ -32,7 +32,7 @@ const refreshSecret = process.env.JWT_REFRESH_SECRET
 
 export const env = {
   nodeEnv,
-  port: parseInt(process.env.PORT ?? '3000', 10),
+  port: parseInt(process.env.PORT ?? '3001', 10),
   jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
   refreshSecret,

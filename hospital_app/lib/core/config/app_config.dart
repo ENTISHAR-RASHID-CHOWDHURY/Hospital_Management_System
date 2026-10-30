@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppConfig {
   AppConfig._();
 
+  /// Port the backend listens on (hospital_backend PORT, default 3001).
+  static const int apiPort = 3001;
+
   // Default IP - fallback when no custom IP is set
   static const String _defaultComputerIP =
       '192.168.1.159'; // Current IP - update when it changes
@@ -135,22 +138,22 @@ class AppConfig {
 
     // Platform-specific URLs with auto-detection
     if (kIsWeb) {
-      return 'http://localhost:3001';
+      return 'http://localhost:$apiPort';
     } else if (Platform.isAndroid) {
       // Auto-detect external device vs emulator
       final isExternal = await isExternalDeviceMode();
       if (isExternal) {
         final ip = await getComputerIP(); // This now auto-detects
-        return 'http://$ip:3001';
+        return 'http://$ip:$apiPort';
       } else {
-        return 'http://10.0.2.2:3001'; // Android emulator
+        return 'http://10.0.2.2:$apiPort'; // Android emulator
       }
     } else if (Platform.isIOS) {
       // For iOS, if on device, use auto-detected IP
       final ip = await getComputerIP();
-      return 'http://$ip:3001';
+      return 'http://$ip:$apiPort';
     } else {
-      return 'http://localhost:3001'; // Windows, macOS, Linux
+      return 'http://localhost:$apiPort'; // Windows, macOS, Linux
     }
   }
 
@@ -169,24 +172,28 @@ class AppConfig {
 
     // Platform-specific URLs (using default IP for sync version)
     if (kIsWeb) {
-      return 'http://localhost:3001';
+      return 'http://localhost:$apiPort';
     } else if (Platform.isAndroid) {
-      return 'http://$_defaultComputerIP:3001'; // Use default IP
+      return 'http://$_defaultComputerIP:$apiPort'; // Use default IP
     } else if (Platform.isIOS) {
-      return 'http://localhost:3001'; // iOS simulator
+      return 'http://localhost:$apiPort'; // iOS simulator
     } else {
-      return 'http://localhost:3001'; // Windows, macOS, Linux
+      return 'http://localhost:$apiPort'; // Windows, macOS, Linux
     }
   }
 
+  /// Base URL for REST calls, e.g. http://localhost:3001/api.
+  /// Override the host with --dart-define=API_BASE_URL=http://host:port
+  static String get apiUrl => '$apiBaseUrl/api';
+
   // Manual override methods for easy switching
-  static String get apiUrlForEmulator => 'http://10.0.2.2:3001';
+  static String get apiUrlForEmulator => 'http://10.0.2.2:$apiPort';
   static Future<String> getApiUrlForExternalDevice() async {
     final ip = await getComputerIP();
-    return 'http://$ip:3001';
+    return 'http://$ip:$apiPort';
   }
 
-  static String get apiUrlForDesktop => 'http://localhost:3001';
+  static String get apiUrlForDesktop => 'http://localhost:$apiPort';
 
   // Quick IP update method (for manual override)
   static Future<void> updateIP(String newIP) async {

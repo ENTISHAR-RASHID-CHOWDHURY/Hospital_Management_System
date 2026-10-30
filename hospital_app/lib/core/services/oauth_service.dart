@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:hospital_app/core/config/app_config.dart';
 
 /// OAuth Authentication Service for Google and Apple Sign-In
 /// Handles both Developer Mode and User Mode authentication
 class OAuthService {
-  static const String baseUrl = 'http://localhost:3001/api';
+  static String get baseUrl => AppConfig.apiUrl;
 
   // OAuth Configuration
   static const String googleClientId = 'YOUR_GOOGLE_CLIENT_ID';
@@ -30,7 +31,7 @@ class OAuthService {
       // This is what the implementation should look like in production:
       
       // Step 1: Verify user exists in system with OAuth provider
-      const verifyEndpoint = '$baseUrl/oauth/google/verify';
+      final verifyEndpoint = '$baseUrl/oauth/google/verify';
       
       final verifyResponse = await http.post(
         Uri.parse(verifyEndpoint),
@@ -84,7 +85,7 @@ class OAuthService {
       // This is what the implementation should look like in production:
       
       // Step 1: Verify user exists in system with OAuth provider
-      const verifyEndpoint = '$baseUrl/oauth/apple/verify';
+      final verifyEndpoint = '$baseUrl/oauth/apple/verify';
       
       final verifyResponse = await http.post(
         Uri.parse(verifyEndpoint),
@@ -137,7 +138,7 @@ class OAuthService {
       /* 
       // This is what the implementation should look like in production:
       
-      const endpoint = '$baseUrl/oauth/email/send-code';
+      final endpoint = '$baseUrl/oauth/email/send-code';
 
       final response = await http.post(
         Uri.parse(endpoint),
@@ -178,7 +179,7 @@ class OAuthService {
       /* 
       // This is what the implementation should look like in production:
       
-      const endpoint = '$baseUrl/oauth/email/verify-code';
+      final endpoint = '$baseUrl/oauth/email/verify-code';
 
       final response = await http.post(
         Uri.parse(endpoint),
