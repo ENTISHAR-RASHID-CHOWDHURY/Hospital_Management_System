@@ -225,14 +225,14 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
         decoration: InputDecoration(
           labelText: 'Enter your email',
           labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-          prefixIcon: Icon(Icons.email, color: AppColors.warning),
+          prefixIcon: const Icon(Icons.email, color: AppColors.warning),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border!),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.warning!, width: 2),
+            borderSide: const BorderSide(color: AppColors.warning, width: 2),
           ),
           filled: true,
           fillColor: AppColors.surfaceDarker,
@@ -311,7 +311,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                 // Icon
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.warning,
                     shape: BoxShape.circle,
                   ),
@@ -341,15 +341,16 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                    prefixIcon: Icon(Icons.email, color: AppColors.warning),
+                    prefixIcon:
+                        const Icon(Icons.email, color: AppColors.warning),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border!),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: AppColors.warning!, width: 2),
+                          const BorderSide(color: AppColors.warning, width: 2),
                     ),
                     filled: true,
                     fillColor: AppColors.surfaceDark,
@@ -366,15 +367,16 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                       labelText: 'Display Name',
                       labelStyle:
                           TextStyle(color: Colors.white.withOpacity(0.7)),
-                      prefixIcon: Icon(Icons.person, color: AppColors.warning),
+                      prefixIcon:
+                          const Icon(Icons.person, color: AppColors.warning),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border!),
+                        borderSide: const BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: AppColors.warning!, width: 2),
+                        borderSide: const BorderSide(
+                            color: AppColors.warning, width: 2),
                       ),
                       filled: true,
                       fillColor: AppColors.surfaceDark,
@@ -391,15 +393,16 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                    prefixIcon: Icon(Icons.lock, color: AppColors.warning),
+                    prefixIcon:
+                        const Icon(Icons.lock, color: AppColors.warning),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border!),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: AppColors.warning!, width: 2),
+                          const BorderSide(color: AppColors.warning, width: 2),
                     ),
                     filled: true,
                     fillColor: AppColors.surfaceDark,
@@ -471,7 +474,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                 // Divider with "OR"
                 Row(
                   children: [
-                    Expanded(child: Divider(color: AppColors.border)),
+                    const Expanded(child: Divider(color: AppColors.border)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
@@ -482,7 +485,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                         ),
                       ),
                     ),
-                    Expanded(child: Divider(color: AppColors.border)),
+                    const Expanded(child: Divider(color: AppColors.border)),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -506,7 +509,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                         label: const Text('Continue with Google'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: BorderSide(color: AppColors.border!),
+                          side: const BorderSide(color: AppColors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -526,7 +529,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                         label: const Text('Continue with Apple'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: BorderSide(color: AppColors.border!),
+                          side: const BorderSide(color: AppColors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -546,7 +549,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                         label: const Text('Continue with Email Code'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: BorderSide(color: AppColors.border!),
+                          side: const BorderSide(color: AppColors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -570,7 +573,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                     _isLoginMode
                         ? 'Need an account? Create one'
                         : 'Already have an account? Login',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.warning,
                       fontSize: 14,
                     ),
@@ -590,7 +593,7 @@ class _DeveloperLoginScreenState extends State<DeveloperLoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info, color: AppColors.info, size: 20),
+                        const Icon(Icons.info, color: AppColors.info, size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(

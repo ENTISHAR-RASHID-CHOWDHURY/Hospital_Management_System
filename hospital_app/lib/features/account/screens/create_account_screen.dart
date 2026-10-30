@@ -405,14 +405,6 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     );
   }
 
-  IconData _getRoleIcon(String role) {
-    final roleMap = _roles.firstWhere(
-      (r) => r['value'] == role,
-      orElse: () => {'icon': Icons.person},
-    );
-    return roleMap['icon'] as IconData;
-  }
-
   Widget _buildPasswordRequirements() {
     return Container(
       padding: const EdgeInsets.all(16),

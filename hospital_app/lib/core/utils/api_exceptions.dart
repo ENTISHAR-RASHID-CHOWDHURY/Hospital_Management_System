@@ -30,6 +30,12 @@ class ApiException implements Exception {
           message: 'Server response timeout. Please try again.',
           code: 'RECEIVE_TIMEOUT',
         );
+      case DioExceptionType.transformTimeout:
+        return const ApiException(
+          message:
+              'Processing the server response took too long. Please try again.',
+          code: 'TRANSFORM_TIMEOUT',
+        );
       case DioExceptionType.badResponse:
         return _handleBadResponse(dioException);
       case DioExceptionType.cancel:

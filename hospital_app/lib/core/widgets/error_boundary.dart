@@ -440,6 +440,6 @@ class StateBuilder<T> extends StatelessWidget {
           );
     }
 
-    return builder(state!);
+    return builder(state as T);
   }
 }

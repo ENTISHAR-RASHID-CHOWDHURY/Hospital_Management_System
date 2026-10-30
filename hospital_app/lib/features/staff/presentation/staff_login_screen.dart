@@ -272,7 +272,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
-            Icon(
+            const Icon(
               Icons.business_center,
               size: 80,
               color: AppColors.primaryBlue,
@@ -363,7 +363,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red),
+                    const Icon(Icons.error_outline, color: Colors.red),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -385,7 +385,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_outline, color: Colors.green),
+                    const Icon(Icons.check_circle_outline, color: Colors.green),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -423,11 +423,11 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
               const SizedBox(height: 24),
 
               // Divider
-              Row(
+              const Row(
                 children: [
                   Expanded(child: Divider(color: Colors.white54)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'OR',
                       style: TextStyle(color: Colors.white70),
@@ -478,7 +478,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
             if (!_showPasswordLogin && _showEmailCodeVerification) ...[
               TextField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Email',
                   filled: true,
                   fillColor: Colors.white,
@@ -490,7 +490,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _codeController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Verification Code (6 digits)',
                   filled: true,
                   fillColor: Colors.white,
@@ -526,7 +526,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
             if (!_showPasswordLogin && !_showEmailCodeVerification) ...[
               TextField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Email for Code Verification',
                   filled: true,
                   fillColor: Colors.white,
@@ -550,7 +550,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
             if (_showPasswordLogin) ...[
               TextField(
                 controller: _emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Email',
                   filled: true,
                   fillColor: Colors.white,
@@ -561,7 +561,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Password',
                   filled: true,
                   fillColor: Colors.white,

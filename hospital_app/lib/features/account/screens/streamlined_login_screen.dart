@@ -243,7 +243,7 @@ class _StreamlinedLoginScreenState
   Widget _buildHeader() {
     return Column(
       children: [
-        Icon(
+        const Icon(
           Icons.local_hospital,
           size: 80,
           color: AppColors.primaryBlue,
@@ -333,7 +333,7 @@ class _StreamlinedLoginScreenState
         const Spacer(),
         TextButton(
           onPressed: _showForgotPasswordDialog,
-          child: Text(
+          child: const Text(
             'Forgot Password?',
             style: TextStyle(
               color: AppColors.primaryBlue,
@@ -447,7 +447,7 @@ class _StreamlinedLoginScreenState
                 MaterialPageRoute(
                     builder: (context) => const CreateAccountScreen()),
               ),
-              child: Text(
+              child: const Text(
                 'Create Account',
                 style: TextStyle(
                   color: AppColors.primaryBlue,
@@ -491,7 +491,7 @@ class _StreamlinedLoginScreenState
         ),
         GestureDetector(
           onTap: () => _showTermsDialog(),
-          child: Text(
+          child: const Text(
             'Terms of Service',
             style: TextStyle(
               color: AppColors.primaryBlue,
@@ -509,7 +509,7 @@ class _StreamlinedLoginScreenState
         ),
         GestureDetector(
           onTap: () => _showPrivacyDialog(),
-          child: Text(
+          child: const Text(
             'Privacy Policy',
             style: TextStyle(
               color: AppColors.primaryBlue,

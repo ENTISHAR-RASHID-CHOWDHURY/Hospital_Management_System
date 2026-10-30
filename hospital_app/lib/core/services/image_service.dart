@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -208,18 +207,14 @@ class _CachedNetworkImageState extends State<CachedNetworkImage> {
 
       // In a real implementation, you would use http package to download the image
       // For now, we'll use a placeholder
-      final ByteData? data =
+      final ByteData data =
           await rootBundle.load('assets/images/placeholder.png');
-      if (data != null) {
-        _imageBytes = data.buffer.asUint8List();
-        await _cacheManager.cacheImage(widget.imageUrl, _imageBytes!);
+      _imageBytes = data.buffer.asUint8List();
+      await _cacheManager.cacheImage(widget.imageUrl, _imageBytes!);
 
-        setState(() {
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load image');
-      }
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _isLoading = false;

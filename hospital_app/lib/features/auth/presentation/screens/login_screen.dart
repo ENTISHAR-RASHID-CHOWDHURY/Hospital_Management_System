@@ -156,8 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     key: const ValueKey('role-selector'),
                                     selectedRole: _selectedRole,
                                     onChanged: (role) {
-                                      setState(() =>
-                                          _selectedRole = role as UserRole);
+                                      setState(() => _selectedRole = role);
                                     },
                                   )
                                 : const SizedBox(height: 0),
@@ -867,8 +866,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
           backgroundColor: AppColors.surfaceDark,
           title: Text(
             isCodeSent ? 'Enter Verification Code' : 'Email Verification',
@@ -906,7 +905,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -968,7 +967,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     );
 
                     if (response['success'] == true) {
-                      Navigator.pop(context); // Close the dialog
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext); // Close the dialog
+                      }
 
                       // Navigate to dashboard
                       final token = response['token'];

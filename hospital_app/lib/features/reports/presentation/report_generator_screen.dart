@@ -84,7 +84,6 @@ class _ReportGeneratorScreenState extends ConsumerState<ReportGeneratorScreen> {
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   String _selectedFormat = 'PDF';
-  List<String> _selectedFilters = [];
   bool _isGenerating = false;
   Map<String, dynamic>? _reportData;
 
@@ -475,11 +474,11 @@ class _ReportGeneratorScreenState extends ConsumerState<ReportGeneratorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.preview, color: Colors.white70),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.preview, color: Colors.white70),
+            SizedBox(width: 8),
+            Text(
               'Report Preview',
               style: TextStyle(
                 fontSize: 18,

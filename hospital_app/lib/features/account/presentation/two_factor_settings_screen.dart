@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
-import '../../auth/presentation/providers/auth_providers.dart';
 
 class TwoFactorSettingsScreen extends ConsumerStatefulWidget {
   const TwoFactorSettingsScreen({super.key});
@@ -19,8 +18,8 @@ class _TwoFactorSettingsScreenState
   bool _isSMSEnabled = true;
   bool _isEmailEnabled = true;
   bool _isAppEnabled = false;
-  String _phoneNumber = '+1 (555) 123-4567';
-  String _email = 'user@hospital.com';
+  final String _phoneNumber = '+1 (555) 123-4567';
+  final String _email = 'user@hospital.com';
   bool _isLoading = false;
 
   @override

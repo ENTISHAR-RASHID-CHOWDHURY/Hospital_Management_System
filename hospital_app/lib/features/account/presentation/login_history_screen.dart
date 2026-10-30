@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
-import '../../auth/presentation/providers/auth_providers.dart';
 
 class LoginHistoryScreen extends ConsumerStatefulWidget {
   const LoginHistoryScreen({super.key});
